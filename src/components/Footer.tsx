@@ -115,7 +115,7 @@ const Footer = () => {
         </div>
         <div className="mt-8 md:order-1 md:mt-0">
           <p className="text-center text-base leading-5 black:text-whiteSecondary text-blackPrimary dark:text-whiteSecondary max-xl:text-sm">
-            Developed and designed by Aleksandar Kuzmanovic, @Kuzma02. Some icons are from <a target="_blank" href="https://www.flaticon.com/">Flaticon.com</a>.
+            Developed and designed by THE GUY.
           </p>
         </div>
       </div>

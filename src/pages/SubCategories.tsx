@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCategories, deleteCategory } from '../utils/apiService';
+import { fetchSubCategories, deleteSubCategory, fetchCategories } from '../utils/apiService';
 import {
   Container,
   Typography,
@@ -19,73 +19,91 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus, HiOutlineArrowLeft } from 'react-icons/hi';
 
-interface Category {
+interface SubCategory {
   _id: string;
   name: string;
   color: string;
+  category: {
+    _id: string;
+    name: string;
+    color: string;
+    images: string[];
+    added_on: string;
+  };
   images: string[];
   added_on: string;
 }
 
-const Categories = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
+const SubCategories = () => {
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [filteredSubCategories, setFilteredSubCategories] = useState<SubCategory[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const getSubCategories = async () => {
+      try {
+        const data = await fetchSubCategories();
+        setSubCategories(data);
+        setFilteredSubCategories(data);
+      } catch (error) {
+        console.error('Error fetching subcategories:', error);
+      }
+    };
+
     const getCategories = async () => {
       try {
-        const data = await fetchCategories();
-        setCategories(data);
-        setFilteredCategories(data);
+        const categoryData = await fetchCategories();
+        setCategories(categoryData.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     };
 
+    getSubCategories();
     getCategories();
   }, []);
 
   useEffect(() => {
-    const filtered = categories.filter(category =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = subCategories.filter(subCategory =>
+      subCategory.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setFilteredCategories(filtered);
-  }, [searchQuery, categories]);
+    setFilteredSubCategories(filtered);
+  }, [searchQuery, subCategories]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   const handleSortChange = () => {
-    const sorted = [...filteredCategories].sort((a, b) => {
+    const sorted = [...filteredSubCategories].sort((a, b) => {
       const dateA = new Date(a.added_on).getTime();
       const dateB = new Date(b.added_on).getTime();
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
-    setFilteredCategories(sorted);
+    setFilteredSubCategories(sorted);
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
   const handleEdit = (id: string) => {
-    navigate(`/categories/${id}/edit`);
+    navigate(`/subcategories/${id}/edit`);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteCategory(id);
-      setCategories(categories.filter(category => category._id !== id));
-      setFilteredCategories(filteredCategories.filter(category => category._id !== id));
+      await deleteSubCategory(id);
+      setSubCategories(subCategories.filter(subCategory => subCategory._id !== id));
+      setFilteredSubCategories(filteredSubCategories.filter(subCategory => subCategory._id !== id));
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Error deleting subcategory:', error);
     }
   };
 
-  const handleAddCategory = () => {
-    navigate('/categories/new');
+  const handleAddSubCategory = () => {
+    navigate('/subcategories/new');
   };
 
   const handleImageClick = (image: string) => {
@@ -95,15 +113,20 @@ const Categories = () => {
   const handleCloseModal = () => {
     setSelectedImage(null);
   };
+  const getCategoryName = (categoryId: string) => {
+    if (!categories) return 'Unknown Category';
+    const category = categories.find((cat) => cat._id === categoryId);
+    return category ? category.name : 'Unknown Category';
+  };
 
   return (
     <Container>
       <Box display="flex" alignItems="center" mb={2}>
-        {/* <IconButton onClick={() => navigate(-1)}>
+        <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
-        </IconButton> */}
+        </IconButton>
         <Typography variant="h4" gutterBottom>
-          All Categories
+          All Subcategories
         </Typography>
       </Box>
       <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
@@ -112,13 +135,13 @@ const Categories = () => {
           value={searchQuery}
           onChange={handleSearchChange}
           className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
-          placeholder="Search categories..."
+          placeholder="Search subcategories..."
         />
         <Button variant="contained" color="primary" onClick={handleSortChange}>
           Sort by Date {sortOrder === 'asc' ? '▲' : '▼'}
         </Button>
-        <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={handleAddCategory}>
-          Add Category
+        <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={handleAddSubCategory}>
+          Add Subcategory
         </Button>
       </Box>
       <TableContainer component={Paper}>
@@ -126,35 +149,33 @@ const Categories = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              {/* <TableCell>Color</TableCell> */}
+              <TableCell>Category</TableCell>
               <TableCell>Image</TableCell>
               <TableCell>Date Added</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCategories.map(category => (
-              <TableRow key={category._id}>
-                <TableCell>{category.name}</TableCell>
-                {/* <TableCell>
-                  <Box bgcolor={category.color} width={20} height={20} borderRadius="50%" />
-                </TableCell> */}
+            {filteredSubCategories.map(subCategory => (
+              <TableRow key={subCategory._id}>
+                <TableCell>{subCategory.name}</TableCell>
+                <TableCell>{subCategory.category.name}</TableCell>
                 <TableCell>
-                  {category.images.length > 0 && (
+                  {subCategory.images.length > 0 && (
                     <img
-                      src={category.images[0]}
-                      alt={`category-${category._id}`}
+                      src={subCategory.images[0]}
+                      alt={`subcategory-${subCategory._id}`}
                       style={{ width: '100px', cursor: 'pointer' }}
-                      onClick={() => handleImageClick(category.images[0])}
+                      onClick={() => handleImageClick(subCategory.images[0])}
                     />
                   )}
                 </TableCell>
-                <TableCell>{new Date(category.added_on).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(subCategory.added_on).toLocaleDateString()}</TableCell>
                 <TableCell className='flex'>
-                  <IconButton color="primary" onClick={() => handleEdit(category._id)}>
+                  <IconButton color="primary" onClick={() => handleEdit(subCategory._id)}>
                     <HiOutlinePencil />
                   </IconButton>
-                  <IconButton color="secondary" onClick={() => handleDelete(category._id)}>
+                  <IconButton color="secondary" onClick={() => handleDelete(subCategory._id)}>
                     <HiOutlineTrash />
                   </IconButton>
                 </TableCell>
@@ -195,4 +216,4 @@ const Categories = () => {
   );
 };
 
-export default Categories;
+export default SubCategories;

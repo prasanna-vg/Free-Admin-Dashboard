@@ -1,68 +1,97 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCategoryById, updateCategory } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, IconButton, Modal } from '@mui/material';
+import { fetchSubCategoryById, updateSubCategory, fetchCategories } from '../utils/apiService';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
-interface Category {
+interface SubCategory {
   _id: string;
   name: string;
   color: string;
-  images: string[];
+  category: string;
+  images: (string | File)[];
 }
 
-const EditCategory = () => {
+const EditSubCategory = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [category, setCategory] = useState<Category>({
+  const [subCategory, setSubCategory] = useState<SubCategory>({
     _id: '',
     name: '',
     color: '',
+    category: '',
     images: [],
   });
+  const [categories, setCategories] = useState([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const getCategory = async (categoryId: string) => {
+    const getSubCategory = async (subCategoryId: string) => {
       try {
-        const data = await fetchCategoryById(categoryId);
-        setCategory(data);
+        const data = await fetchSubCategoryById(subCategoryId);
+        setSubCategory({
+          ...data,
+          category: data.category._id,
+        });
       } catch (error) {
-        console.error('Error fetching category:', error);
+        console.error('Error fetching subcategory:', error);
       }
     };
 
-    getCategory(id!);
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    getSubCategory(id!);
+    getCategories();
   }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCategory({ ...category, [name]: value });
+    setSubCategory({ ...subCategory, [name]: value });
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+    const { value } = e.target;
+    setSubCategory({ ...subCategory, category: value as string });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setCategory({ ...category, images: [...category.images, URL.createObjectURL(file)] });
+      setSubCategory({ ...subCategory, images: [...subCategory.images, file] });
     }
   };
 
   const handleDeleteImage = (index: number) => {
-    const newImages = category.images.filter((_, i) => i !== index);
-    setCategory({ ...category, images: newImages });
+    const newImages = subCategory.images.filter((_, i) => i !== index);
+    setSubCategory({ ...subCategory, images: newImages });
   };
 
-  const handleUpdateCategory = async () => {
+  const handleUpdateSubCategory = async () => {
     const formData = new FormData();
-    formData.append('name', category.name);
-    formData.append('color', category.color);
-    formData.append('images', JSON.stringify(category.images));
+    formData.append('name', subCategory.name);
+    formData.append('color', subCategory.color);
+    formData.append('category', subCategory.category);
+
+    subCategory.images.forEach((image) => {
+      if (typeof image === 'string') {
+        formData.append('existingImages', image);
+      } else {
+        formData.append('images', image);
+      }
+    });
 
     try {
-      await updateCategory(id!, formData);
-      navigate('/categories');
+      await updateSubCategory(id!, formData);
+      navigate('/subcategories');
     } catch (error) {
-      console.error('Error updating category:', error);
+      console.error('Error updating subcategory:', error);
     }
   };
 
@@ -81,26 +110,43 @@ const EditCategory = () => {
           <HiOutlineArrowLeft />
         </IconButton>
         <Typography variant="h4" gutterBottom>
-          Edit Category
+          Edit SubCategory
         </Typography>
       </Box>
       <Box component="form" noValidate autoComplete="off">
         <TextField
           label="Name"
           name="name"
-          value={category.name}
+          value={subCategory.name}
           onChange={handleInputChange}
           fullWidth
           margin="normal"
         />
-        {/* <TextField
+        <TextField
           label="Color"
           name="color"
-          value={category.color}
+          value={subCategory.color}
           onChange={handleInputChange}
           fullWidth
           margin="normal"
-        /> */}
+        />
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Category</InputLabel>
+          <Select
+            name="category"
+            value={subCategory.category}
+            onChange={handleCategoryChange}
+          >
+            <MenuItem value="">
+              <em>Select Category</em>
+            </MenuItem>
+            {categories.map(category => (
+              <MenuItem key={category._id} value={category._id}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Box mt={2}>
           <Button variant="contained" component="label">
             Upload Image
@@ -111,9 +157,14 @@ const EditCategory = () => {
             />
           </Button>
           <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-            {category.images.map((image, index) => (
+            {subCategory.images.map((image, index) => (
               <Box key={index} position="relative" display="inline-block">
-                <img src={image} alt={`category-${index}`} style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(image)} />
+                <img
+                  src={typeof image === 'string' ? image : URL.createObjectURL(image)}
+                  alt={`subcategory-${index}`}
+                  style={{ width: '100px', marginRight: '10px' }}
+                  onClick={() => handleImageClick(typeof image === 'string' ? image : URL.createObjectURL(image))}
+                />
                 <IconButton
                   style={{ position: 'absolute', top: 0, right: 0 }}
                   onClick={() => handleDeleteImage(index)}
@@ -124,8 +175,8 @@ const EditCategory = () => {
             ))}
           </Box>
         </Box>
-        <Button variant="contained" color="primary" onClick={handleUpdateCategory} startIcon={<HiOutlineSave />}>
-          Update Category
+        <Button variant="contained" color="primary" onClick={handleUpdateSubCategory} startIcon={<HiOutlineSave />}>
+          Update SubCategory
         </Button>
       </Box>
       <Modal open={!!selectedImage} onClose={handleCloseModal}>
@@ -160,4 +211,4 @@ const EditCategory = () => {
   );
 };
 
-export default EditCategory;
+export default EditSubCategory;

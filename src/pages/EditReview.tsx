@@ -35,7 +35,7 @@ const EditReview = () => {
                   Save Review
                 </span>
               </button>
-              <WhiteButton
+              {/* <WhiteButton
                 link="/reviews"
                 textSize="lg"
                 width="48"
@@ -43,7 +43,7 @@ const EditReview = () => {
                 text="Update review"
               >
                 <HiOutlineSave className="dark:text-blackPrimary text-whiteSecondary text-xl" />
-              </WhiteButton>
+              </WhiteButton> */}
             </div>
           </div>
 

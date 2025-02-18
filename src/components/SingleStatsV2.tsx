@@ -22,7 +22,7 @@
 
 const SingleStatsV2 = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col gap-2 dark:bg-gray-900 bg-whiteSecondary border border-blackPrimary w-72 px-5 py-5 rounded-md">
+    <div className="flex flex-col gap-2 dark:bg-gray-900 bg-whiteSecondary border border-blackPrimary w-72 h-fit px-5 py-5 rounded-md">
       {children}
     </div>
   );

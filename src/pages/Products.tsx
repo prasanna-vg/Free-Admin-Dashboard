@@ -1,65 +1,228 @@
-import { Pagination, ProductTable, RowsPerPage, Sidebar, WhiteButton } from "../components";
-import { HiOutlinePlus } from "react-icons/hi";
-import { HiOutlineChevronRight } from "react-icons/hi";
-import { AiOutlineExport } from "react-icons/ai";
-import { HiOutlineSearch } from "react-icons/hi";
+import React, { useEffect, useState } from 'react';
+import { fetchProducts, deleteProduct } from '../utils/apiService';
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Collapse,
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus, HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi';
+
+interface ProductDetail {
+  title: string;
+  content: string;
+  id: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  richDescription: string;
+  brand: string;
+  price: number;
+  category: { name: string } | null;
+  subCategory: { name: string } | null;
+  countInStock: number;
+  rating: number;
+  numReviews: number;
+  isFeatured: boolean;
+  quantities: Record<string, number>;
+  details: ProductDetail[];
+  dateCreated: string;
+}
 
 const Products = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const getProducts = async () => {
+      try {
+        const data = await fetchProducts();
+        setProducts(data);
+        setFilteredProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    getProducts();
+  }, []);
+
+  useEffect(() => {
+    const filtered = products.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSortChange = () => {
+    const sorted = [...filteredProducts].sort((a, b) => {
+      const dateA = new Date(a.dateCreated).getTime();
+      const dateB = new Date(b.dateCreated).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+    setFilteredProducts(sorted);
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/products/${id}/edit`);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProduct(id);
+      setProducts(products.filter(product => product.id !== id));
+      setFilteredProducts(filteredProducts.filter(product => product.id !== id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
+
+  const handleAddProduct = () => {
+    navigate('/products/new');
+  };
+
+  const handleRowClick = (id: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(id)) {
+      newExpandedRows.delete(id);
+    } else {
+      newExpandedRows.add(id);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
   return (
-    <div className="h-auto border-t dark:border-blackSecondary border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
-      <Sidebar />
-      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full ">
-        <div className="dark:bg-blackPrimary bg-whiteSecondary py-10">
-          <div className="px-4 sm:px-6 lg:px-8 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-3xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                All products
-              </h2>
-              <p className="dark:text-whiteSecondary text-blackPrimary text-base font-normal flex items-center">
-                <span>Dashboard</span>{" "}
-                <HiOutlineChevronRight className="text-lg" />{" "}
-                <span>All products</span>
-              </p>
-            </div>
-            <div className="flex gap-x-2 max-[370px]:flex-col max-[370px]:gap-2 max-[370px]:items-center">
-              <button className="dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 w-32 py-2 text-lg hover:border-gray-500 duration-200 flex items-center justify-center gap-x-2">
-                <AiOutlineExport className="dark:text-whiteSecondary text-blackPrimary text-base" />
-                <span className="dark:text-whiteSecondary text-blackPrimary font-medium">Export</span>
-              </button>
-              <WhiteButton link="/products/create-product" text="Add a product" textSize="lg" py="2" width="48"><HiOutlinePlus className="dark:text-blackPrimary text-whiteSecondary" /></WhiteButton>
-            </div>
-          </div>
-          <div className="px-4 sm:px-6 lg:px-8 flex justify-between items-center mt-5 max-sm:flex-col max-sm:gap-2">
-            <div className="relative">
-              <HiOutlineSearch className="text-gray-400 text-lg absolute top-3 left-3" />
-              <input
-                type="text"
-                className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
-                placeholder="Search products..."
-              />
-            </div>
-            <div>
-              <select
-                className="w-60 h-10 dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 pl-3 pr-8 cursor-pointer hover:border-gray-500"
-                name="sort"
-                id="sort"
-              >
-                <option value="default">Sort by</option>
-                <option value="az">A-Z</option>
-                <option value="za">Z-A</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-            </div>
-          </div>
-          <ProductTable />
-          <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-6 max-sm:flex-col gap-4 max-sm:pt-6 max-sm:pb-0">
-            <RowsPerPage />
-            <Pagination />
-          </div>
-        </div>
-      </div>
-    </div>
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        Products
+      </Typography>
+      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+        <TextField
+          type="text"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
+          placeholder="Search products..."
+        />
+        <Button variant="contained" color="primary" onClick={handleSortChange}>
+          Sort by Date {sortOrder === 'asc' ? '▲' : '▼'}
+        </Button>
+        <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={handleAddProduct}>
+          Add Product
+        </Button>
+      </Box>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell></TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Price</TableCell>
+              <TableCell>Date Created</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredProducts.map(product => (
+              <React.Fragment key={product.id}>
+                <TableRow>
+                  <TableCell>
+                    <IconButton onClick={() => handleRowClick(product.id)}>
+                      {expandedRows.has(product.id) ? <HiOutlineChevronUp /> : <HiOutlineChevronDown />}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell>₹{Math.min(...Object.values(product.quantities))}</TableCell>
+                  <TableCell>{new Date(product.dateCreated).toLocaleDateString()}</TableCell>
+                  <TableCell className='flex' style={{display:'flex'}}>
+                    <IconButton color="primary" onClick={() => handleEdit(product.id)}>
+                      <HiOutlinePencil />
+                    </IconButton>
+                    <IconButton color="secondary" onClick={() => handleDelete(product.id)}>
+                      <HiOutlineTrash />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                    <Collapse in={expandedRows.has(product.id)} timeout="auto" unmountOnExit>
+                      <Box margin={1}>
+                        <Typography variant="h6" gutterBottom component="div">
+                          Details
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Rich Description:</strong> {product.richDescription}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Brand:</strong> {product.brand}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Category:</strong> {product.category ? product.category.name : 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>SubCategory:</strong> {product.subCategory ? product.subCategory.name : 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Count In Stock:</strong> {product.countInStock}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Rating:</strong> {product.rating}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Number of Reviews:</strong> {product.numReviews}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Is Featured:</strong> {product.isFeatured ? 'Yes' : 'No'}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Quantities:</strong> {JSON.stringify(product.quantities)}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          <strong>Details:</strong>
+                          <ul>
+                            {product.details.map((detail: ProductDetail) => (
+                              <li key={detail.id}>
+                                <strong>{detail.title}:</strong> {detail.content}
+                              </li>
+                            ))}
+                          </ul>
+                        </Typography>
+                      </Box>
+                    </Collapse>
+                  </TableCell>
+                </TableRow>
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Container>
   );
 };
+
 export default Products;

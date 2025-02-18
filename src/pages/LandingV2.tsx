@@ -1,94 +1,99 @@
-import { Sidebar, SingleStatsV2, TotalSavings } from "../components";
-import {
-  HiArrowSmallDown,
-  HiCurrencyDollar,
-  HiUserGroup,
-} from "react-icons/hi2";
-import { HiArrowSmallUp } from "react-icons/hi2";
-import { HiShoppingCart } from "react-icons/hi2";
-import ChartItem from "../components/chart/ChartItem";
-import RechartsAreaChart from "../components/chart/RechartsAreaChart";
-import RechartsBarChart from "../components/chart/RechartsBarChart";
-import RechartsLineChart from "../components/chart/RechartsLineChart";
+import React, { useEffect, useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import { HiUserGroup, HiArrowSmUp } from 'react-icons/hi';
+import { fetchUserAnalytics } from '../utils/apiService';
+import { Container, Typography, Paper, Grid, Box } from '@mui/material';
+import Sidebar from '../components/Sidebar';
 
-const Landingv2 = () => {
+const LandingV2 = () => {
+  const [analytics, setAnalytics] = useState<any>({
+    users: 0,
+    orders: 0,
+    sales: 0,
+    products: 0,
+    categories: 0,
+    subCategories: 0,
+  });
+
+  useEffect(() => {
+    const getAnalytics = async () => {
+      try {
+        const data = await fetchUserAnalytics();
+        setAnalytics(data.data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      }
+    };
+
+    getAnalytics();
+  }, []);
+
   return (
-    <div className="h-auto border-t dark:border-blackSecondary border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
-      <Sidebar />
-      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full pt-6 pl-9 max-sm:pt-6 max-sm:pl-1">
-        <h3 className="text-3xl dark:text-whiteSecondary text-blackPrimary font-bold mb-7 max-sm:text-2xl px-5">
-          Overview
-        </h3>
-        {/* stats */}
-        <div className="flex flex-wrap justify-between gap-5 px-5 w-[95%]">
-          <SingleStatsV2>
-            <SingleStatsV2.StatsCategory statsCategory="Profit">
-              <HiCurrencyDollar className="text-2xl" />
-            </SingleStatsV2.StatsCategory>
-            <SingleStatsV2.MoneyStats moneyAmount="$8650.50">
-              <p className="text-white dark:bg-green-700 bg-green-500 w-20 h-10 flex gap-1 items-center justify-center font-semibold">
-                <HiArrowSmallUp className="text-blackPrimary text-xl" />{" "}
-                <span>12.8%</span>
-              </p>
-            </SingleStatsV2.MoneyStats>
-            <SingleStatsV2.PercentageStats isPositive={true} percentage="25%" />
-          </SingleStatsV2>
-
-          <SingleStatsV2>
-            <SingleStatsV2.StatsCategory statsCategory="Spendings">
-              <HiShoppingCart className="text-2xl" />
-            </SingleStatsV2.StatsCategory>
-            <SingleStatsV2.MoneyStats moneyAmount="$1590">
-              <p className="text-white dark:bg-red-700 bg-red-500 w-20 h-10 flex gap-1 items-center justify-center font-semibold">
-                <HiArrowSmallDown className="text-blackPrimary text-xl" />{" "}
-                <span>3.3%</span>
-              </p>
-            </SingleStatsV2.MoneyStats>
-            <SingleStatsV2.PercentageStats isPositive={false} percentage="5%" />
-          </SingleStatsV2>
-
-          <SingleStatsV2>
-            <SingleStatsV2.StatsCategory statsCategory="Revenue">
-              <HiCurrencyDollar className="text-2xl" />
-            </SingleStatsV2.StatsCategory>
-            <SingleStatsV2.MoneyStats moneyAmount="12400.75">
-              <p className="text-white dark:bg-green-700 bg-green-500 w-20 h-10 flex gap-1 items-center justify-center font-semibold">
-                <HiArrowSmallUp className="text-blackPrimary text-xl" />{" "}
-                <span>15.1%</span>
-              </p>
-            </SingleStatsV2.MoneyStats>
-            <SingleStatsV2.PercentageStats
-              isPositive={true}
-              percentage="15.2%"
-            />
-          </SingleStatsV2>
-
-          <SingleStatsV2>
-            <SingleStatsV2.StatsCategory statsCategory="New Users">
-              <HiUserGroup className="text-2xl" />
-            </SingleStatsV2.StatsCategory>
-            <SingleStatsV2.MoneyStats moneyAmount="450">
-              <p className="text-white dark:bg-green-700 bg-green-500 w-20 h-10 flex gap-1 items-center justify-center font-semibold">
-                <HiArrowSmallUp className="text-blackPrimary text-xl" />{" "}
-                <span>3.8%</span>
-              </p>
-            </SingleStatsV2.MoneyStats>
-            <SingleStatsV2.PercentageStats
-              isPositive={true}
-              percentage="9.8%"
-            />
-          </SingleStatsV2>
-        </div>
-        <div className="w-[95%] px-5 mt-10 max-md:w-[90%] max-[400px]:w-[95%] dark:bg-black bg-whiteSecondary">
-
-        <ChartItem title="Revenue VS Profit">
-          <RechartsBarChart />
-        </ChartItem>
-
-        <TotalSavings isPositive={true} percentage="25%" />
-        </div>
-      </div>
-    </div>
+    <Box display="flex">
+      <Container>
+        <Typography variant="h4" gutterBottom>
+          Dashboard
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total Users</Typography>
+              <Typography variant="h4">{analytics.users}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total Orders</Typography>
+              <Typography variant="h4">{analytics.orders}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total Sales</Typography>
+              <Typography variant="h4">₹{analytics.sales}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total Products</Typography>
+              <Typography variant="h4">{analytics.products}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total Categories</Typography>
+              <Typography variant="h4">{analytics.categories}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper elevation={3} className="p-4">
+              <Typography variant="h6">Total SubCategories</Typography>
+              <Typography variant="h4">{analytics.subCategories}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                <HiArrowSmUp /> 0%
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+        <Outlet />
+      </Container>
+    </Box>
   );
 };
-export default Landingv2;
+
+export default LandingV2;

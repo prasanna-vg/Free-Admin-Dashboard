@@ -1,112 +1,144 @@
-import { HiOutlineSave } from "react-icons/hi";
-import {
-  ImageUpload,
-  InputWithLabel,
-  Sidebar,
-  SimpleInput,
-  TextAreaInput,
-} from "../components";
-import SelectInput from "../components/SelectInput";
-import { selectList, stockStatusList } from "../utils/data";
-import { AiOutlineSave } from "react-icons/ai";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createCategory } from '../utils/apiService';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal } from '@mui/material';
+import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateCategory = () => {
+  const navigate = useNavigate();
+  const [category, setCategory] = useState({
+    name: '',
+    color: '',
+    images: [],
+  });
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCategory({ ...category, [name]: value });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCategory({ ...category, images: [...category.images, file] });
+    }
+  };
+
+  const handleDeleteImage = (index: number) => {
+    const newImages = category.images.filter((_, i) => i !== index);
+    setCategory({ ...category, images: newImages });
+  };
+
+  const handleCreateCategory = async () => {
+    const formData = new FormData();
+    formData.append('name', category.name);
+    formData.append('color', category.color);
+
+    for (let i = 0; i < category.images.length; i++) {
+      formData.append('images', category.images[i]);
+    }
+
+    try {
+      await createCategory(formData);
+      navigate('/categories');
+    } catch (error) {
+      console.error('Error creating category:', error);
+    }
+  };
+
+  const handleImageClick = (image: string) => {
+    setSelectedImage(image);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedImage(null);
+  };
+
   return (
-    <div className="h-auto border-t border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
-      <Sidebar />
-      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full ">
-        <div className="dark:bg-blackPrimary bg-whiteSecondary py-10">
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-3xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Add new category
-              </h2>
-            </div>
-            <div className="flex gap-x-2 max-[370px]:flex-col max-[370px]:gap-2 max-[370px]:items-center">
-              <button className="dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 w-48 py-2 text-lg dark:hover:border-gray-500 hover:border-gray-400 duration-200 flex items-center justify-center gap-x-2">
-                <AiOutlineSave className="dark:text-whiteSecondary text-blackPrimary text-xl" />
-                <span className="dark:text-whiteSecondary text-blackPrimary font-medium">
-                  Save draft
-                </span>
-              </button>
-              <Link
-                to="/categories/add-category"
-                className="dark:bg-whiteSecondary bg-blackPrimary w-48 py-2 text-lg dark:hover:bg-white hover:bg-black duration-200 flex items-center justify-center gap-x-2"
-              >
-                <HiOutlineSave className="dark:hover:text-blackPrimary hover:text-whiteSecondary dark:text-blackPrimary text-whiteSecondary text-xl" />
-                <span className="dark:text-blackPrimary text-whiteSecondary font-semibold">
-                  Publish category
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Add Category section here  */}
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
-            {/* left div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Basic information
-              </h3>
-
-              <div className="mt-4 flex flex-col gap-5">
-                <InputWithLabel label="Category title">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a category title..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Category description">
-                  <TextAreaInput
-                    placeholder="Enter a category description..."
-                    rows={4}
-                    cols={50}
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Category slug">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a category slug..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Parent category (optional)">
-                  <SelectInput selectList={selectList} />
-                </InputWithLabel>
-              </div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                SEO
-              </h3>
-              <div className="mt-4 flex flex-col gap-5">
-                <InputWithLabel label="Meta title">
-                  <SimpleInput type="text" placeholder="Enter a meta title..." />
-                </InputWithLabel>
-
-                <InputWithLabel label="Meta description">
-                  <TextAreaInput
-                    placeholder="Enter a meta description..."
-                    rows={4}
-                    cols={50}
-                  />
-                </InputWithLabel>
-              </div>
-            </div>
-
-            {/* right div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Category image
-              </h3>
-
-              <ImageUpload />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Container>
+      <Box display="flex" alignItems="center" mb={2}>
+        <IconButton onClick={() => navigate(-1)}>
+          <HiOutlineArrowLeft />
+        </IconButton>
+        <Typography variant="h4" gutterBottom>
+          Add New Category
+        </Typography>
+      </Box>
+      <Box component="form" noValidate autoComplete="off">
+        <TextField
+          label="Name"
+          name="name"
+          value={category.name}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
+        {/* <TextField
+          label="Color"
+          name="color"
+          value={category.color}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        /> */}
+        <Box mt={2}>
+          <Button variant="contained" component="label">
+            Upload Image
+            <input
+              type="file"
+              hidden
+              onChange={handleImageChange}
+            />
+          </Button>
+          <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
+            {category.images.map((image, index) => (
+              <Box key={index} position="relative" display="inline-block">
+                <img src={URL.createObjectURL(image)} alt={`category-${index}`} style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(URL.createObjectURL(image))} />
+                <IconButton
+                  style={{ position: 'absolute', top: 0, right: 0 }}
+                  onClick={() => handleDeleteImage(index)}
+                >
+                  <HiOutlineTrash />
+                </IconButton>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Button variant="contained" color="primary" onClick={handleCreateCategory} startIcon={<HiOutlineSave />}>
+          Create Category
+        </Button>
+      </Box>
+      <Modal open={!!selectedImage} onClose={handleCloseModal}>
+        <Box
+          position="absolute"
+          top="50%"
+          left="50%"
+          transform="translate(-50%, -50%)"
+          bgcolor="background.paper"
+          boxShadow={24}
+          p={4}
+          width="80%"
+          maxWidth="600px"
+          maxHeight="80vh"
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="60vh"
+            overflow="hidden"
+          >
+            <img src={selectedImage!} alt="Selected" style={{ maxHeight: '100%', maxWidth: '100%' }} />
+          </Box>
+          <Button onClick={handleCloseModal} style={{ marginTop: '10px' }}>
+            Close
+          </Button>
+        </Box>
+      </Modal>
+    </Container>
   );
 };
+
 export default CreateCategory;
