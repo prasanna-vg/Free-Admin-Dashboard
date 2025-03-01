@@ -1,23 +1,38 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://35.225.43.56:3000/api/v1';
-// const API_BASE_URL = 'http://localhost:3000/api/v1';
+// const API_BASE_URL = 'http://34.45.81.207:3001/api';
+const API_BASE_URL = "http://localhost:3001/api";
 
-export const login = async (email: string, password: string) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/users/login`, {
-      email,
-      password,
-    });
-    console.log(response.data)
-    return response.data;
-  } catch (error) {
-    throw error;
+// Add a request interceptor
+axios.interceptors.request.use(
+  (config) => {
+    // Get the token from local storage
+    const token = localStorage.getItem("token");
+    if (token) {
+      // Add the token to the Authorization header
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
+
+export const login = async (identifier: string, password: string) => {
+  const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+    identifier,
+    password,
+  });
+  console.log(response.data);
+  // Store the token in local storage
+  localStorage.setItem("token", response.data.token);
+  return response.data;
 };
 export const fetchProducts = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/products`);
+    console.log("Products: ", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -31,6 +46,16 @@ export const fetchProductById = async (id: string) => {
     throw error;
   }
 };
+export const fetchProductByGroup = async (id: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/products/grouped/by-category-and-subcategory`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const updateProduct = async (id: string, productData: FormData) => {
   try {
@@ -38,13 +63,17 @@ export const updateProduct = async (id: string, productData: FormData) => {
     console.log("id", id);
     console.log("product", productData);
     for (let pair of productData.entries()) {
-      console.log(pair[0] + ': ' + pair[1]);
+      console.log(pair[0] + ": " + pair[1]);
     }
-    const response = await axios.put(`${API_BASE_URL}/products/${id}`, productData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.put(
+      `${API_BASE_URL}/products/${id}`,
+      productData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     console.log(response.data);
     return response.data;
   } catch (error) {
@@ -70,7 +99,9 @@ export const deleteProduct = async (id: string) => {
 };
 export const fetchCategoriesWithSubcategories = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/subcategories/grouped-by-category`);
+    const response = await axios.get(
+      `${API_BASE_URL}/subcategories/grouped-by-category`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -79,6 +110,7 @@ export const fetchCategoriesWithSubcategories = async () => {
 export const fetchCategories = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/categories`);
+    console.log("categories: ", response);
     return response.data;
   } catch (error) {
     throw error;
@@ -97,18 +129,21 @@ export const createCategory = async (formData: FormData) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/categories`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating category:', error);
+    console.error("Error creating category:", error);
     throw error;
   }
 };
 export const updateCategory = async (id: string, categoryData: any) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/categories/${id}`, categoryData);
+    const response = await axios.put(
+      `${API_BASE_URL}/categories/${id}`,
+      categoryData
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -116,16 +151,21 @@ export const updateCategory = async (id: string, categoryData: any) => {
 };
 export const deleteCategory = async (categoryId: string) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/categories/${categoryId}`);
+    const response = await axios.delete(
+      `${API_BASE_URL}/categories/${categoryId}`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error deleting category:', error);
+    console.error("Error deleting category:", error);
     throw error;
   }
 };
 export const createSubCategory = async (subCategoryData: any) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/subcategories`, subCategoryData);
+    const response = await axios.post(
+      `${API_BASE_URL}/subcategories`,
+      subCategoryData
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -151,7 +191,10 @@ export const fetchSubCategoryById = async (id: string) => {
 
 export const updateSubCategory = async (id: string, categoryData: any) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/subcategories/${id}`, categoryData);
+    const response = await axios.put(
+      `${API_BASE_URL}/subcategories/${id}`,
+      categoryData
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -159,27 +202,45 @@ export const updateSubCategory = async (id: string, categoryData: any) => {
 };
 export const deleteSubCategory = async (subCategoryId: string) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/subcategories/${subCategoryId}`);
+    const response = await axios.delete(
+      `${API_BASE_URL}/subcategories/${subCategoryId}`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error deleting subcategory:', error);
+    console.error("Error deleting subcategory:", error);
     throw error;
   }
 };
 export const fetchOrders = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/orders`);
-    console.log("orders -> ",response.data)
+    console.log("orders -> ", response.data);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-
 export const fetchOrderById = async (id: string) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/orders/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const acceptOrder = async (id: string) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/orders/accept/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+export const rejectOrder = async (id: string) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/orders/reject/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -205,7 +266,9 @@ export const fetchAnalytics = async () => {
 
 export const fetchUserAnalytics = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/users/analytics/timeline`);
+    const response = await axios.get(
+      `${API_BASE_URL}/users/analytics/timeline`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -217,26 +280,40 @@ export const fetchInventory = async () => {
     const response = await axios.get(`${API_BASE_URL}/inventory`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching inventory:', error);
+    console.error("Error fetching inventory:", error);
     throw error;
   }
 };
 
 export const fetchPickAndPack = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/pick-pack`);
+    const response = await axios.get(`${API_BASE_URL}/pickandpack/orders`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching pick and pack data:', error);
+    console.error("Error fetching pick and pack data:", error);
     throw error;
   }
 };
-export const updateDeliveryStatus = async (id: string, deliveryStatus: string) => {
+export const markAsPacked = async (id: string) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/pick-pack/${id}`, { deliveryStatus });
+    const response = await axios.post(`${API_BASE_URL}/pickandpack/pack/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Error updating delivery status:', error);
+    console.error("Error updating pick and pack data:", error);
+    throw error;
+  }
+};
+export const updateDeliveryStatus = async (
+  id: string,
+  deliveryStatus: string
+) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/pick-pack/${id}`, {
+      deliveryStatus,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating delivery status:", error);
     throw error;
   }
 };
@@ -246,37 +323,45 @@ export const fetchDeliveryPartners = async () => {
     const response = await axios.get(`${API_BASE_URL}/delivery-partners`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching delivery partners:', error);
+    console.error("Error fetching delivery partners:", error);
     throw error;
   }
 };
 
 export const addDeliveryPartner = async (partnerData: any) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/delivery-partners`, partnerData);
+    const response = await axios.post(
+      `${API_BASE_URL}/delivery-partners`,
+      partnerData
+    );
     return response.data;
   } catch (error) {
-    console.error('Error adding delivery partner:', error);
+    console.error("Error adding delivery partner:", error);
     throw error;
   }
 };
 
 export const updateDeliveryPartner = async (id: string, partnerData: any) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/delivery-partners/${id}`, partnerData);
+    const response = await axios.put(
+      `${API_BASE_URL}/delivery-partners/${id}`,
+      partnerData
+    );
     return response.data;
   } catch (error) {
-    console.error('Error updating delivery partner:', error);
+    console.error("Error updating delivery partner:", error);
     throw error;
   }
 };
 
 export const deleteDeliveryPartner = async (id: string) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/delivery-partners/${id}`);
+    const response = await axios.delete(
+      `${API_BASE_URL}/delivery-partners/${id}`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error deleting delivery partner:', error);
+    console.error("Error deleting delivery partner:", error);
     throw error;
   }
 };
@@ -286,7 +371,7 @@ export const fetchDeliveries = async () => {
     const response = await axios.get(`${API_BASE_URL}/delivery`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching deliveries:', error);
+    console.error("Error fetching deliveries:", error);
     throw error;
   }
 };
@@ -296,17 +381,20 @@ export const addDelivery = async (deliveryData: any) => {
     const response = await axios.post(`${API_BASE_URL}/delivery`, deliveryData);
     return response.data;
   } catch (error) {
-    console.error('Error adding delivery:', error);
+    console.error("Error adding delivery:", error);
     throw error;
   }
 };
 
 export const updateDelivery = async (id: string, deliveryData: any) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/delivery/${id}`, deliveryData);
+    const response = await axios.put(
+      `${API_BASE_URL}/delivery/${id}`,
+      deliveryData
+    );
     return response.data;
   } catch (error) {
-    console.error('Error updating delivery:', error);
+    console.error("Error updating delivery:", error);
     throw error;
   }
 };
@@ -316,26 +404,32 @@ export const deleteDelivery = async (id: string) => {
     const response = await axios.delete(`${API_BASE_URL}/delivery/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Error deleting delivery:', error);
+    console.error("Error deleting delivery:", error);
     throw error;
   }
 };
 
-export const createPickAndPack = async (data: { orderId: string; orderType: string }) => {
+export const createPickAndPack = async (data: {
+  orderId: string;
+  orderType: string;
+}) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/pick-pack`, data);
     return response.data;
   } catch (error) {
-    console.error('Error creating pick and pack:', error);
+    console.error("Error creating pick and pack:", error);
     throw error;
   }
 };
-export const updatePickAndPack = async (id: string, data: { deliveryStatus: string }) => {
+export const updatePickAndPack = async (
+  id: string,
+  data: { deliveryStatus: string }
+) => {
   try {
     const response = await axios.put(`${API_BASE_URL}/pick-pack/${id}`, data);
     return response.data;
   } catch (error) {
-    console.error('Error updating pick and pack:', error);
+    console.error("Error updating pick and pack:", error);
     throw error;
   }
 };

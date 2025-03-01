@@ -1,33 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { addDelivery, fetchPickAndPack, updateDeliveryStatus, fetchDeliveryPartners } from '../utils/apiService';
+import { fetchPickAndPack, markAsPacked, fetchDeliveryPartners, addDelivery } from '../utils/apiService';
 import {
   Container,
   Typography,
   Box,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Button,
   Modal,
   Select,
   MenuItem,
 } from '@mui/material';
+import DataTable, { TableColumn } from 'react-data-table-component';
 
 interface PickAndPackItem {
-  _id: string;
-  orderId: {
-    _id: string;
-    totalPrice: number;
-    order_code: string;
+  id: string;
+  orderId: number;
+  orderSize: string;
+  packed: boolean;
+  dataPageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  Order: {
+    id: number;
+    userId: number;
+    totalAmount: number;
+    GST: number;
+    deliveryTime: string;
+    deliveryType: string;
+    deliveryDate: string;
+    deliveryCharge: number;
+    paymentStatus: string;
+    orderStatus: string;
+    orderCancelledReason: string | null;
+    orderRejectedReason: string | null;
+    deliveryAddresses: number;
+    order_additional_comments: string | null;
+    createdAt: string;
+    updatedAt: string;
   };
-  orderType: string;
-  deliveryStatus: string;
-  packedDate: string;
 }
 
 const PickAndPack = () => {
@@ -37,13 +47,14 @@ const PickAndPack = () => {
   const [selectedItem, setSelectedItem] = useState<PickAndPackItem | null>(null);
   const [newDeliveryStatus, setNewDeliveryStatus] = useState('');
   const [showNoDeliveryPartnerModal, setShowNoDeliveryPartnerModal] = useState<boolean>(false);
+  const [packedFilter, setPackedFilter] = useState<string>('all');
 
   useEffect(() => {
     const getPickAndPack = async () => {
       try {
         const data = await fetchPickAndPack();
-        setPickAndPack(data);
-        setFilteredPickAndPack(data);
+        setPickAndPack(data.pickAndPack);
+        setFilteredPickAndPack(data.pickAndPack);
       } catch (error) {
         console.error('Error fetching pick and pack data:', error);
       }
@@ -54,13 +65,18 @@ const PickAndPack = () => {
 
   useEffect(() => {
     const filtered = pickAndPack.filter(item =>
-      item.orderId.order_code.toLowerCase().includes(searchQuery.toLowerCase())
+      item.Order.orderStatus.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (packedFilter === 'all' || item.packed.toString() === packedFilter)
     );
     setFilteredPickAndPack(filtered);
-  }, [searchQuery, pickAndPack]);
+  }, [searchQuery, packedFilter, pickAndPack]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handlePackedFilterChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+    setPackedFilter(e.target.value as string);
   };
 
   const handleOpenModal = (item: PickAndPackItem) => {
@@ -72,6 +88,7 @@ const PickAndPack = () => {
     setSelectedItem(null);
     setNewDeliveryStatus('');
   };
+
   const handleCloseNoDeliveryPartnerModal = () => {
     setShowNoDeliveryPartnerModal(false);
   };
@@ -80,34 +97,57 @@ const PickAndPack = () => {
     if (selectedItem) {
       try {
         if (newDeliveryStatus === 'Packed') {
-          const deliveryPartner = await fetchDeliveryPartners(selectedItem.orderId);
-          console.log("deliveryPartner:", deliveryPartner);
+          const deliveryPartner = await fetchDeliveryPartners(selectedItem.Order.id);
           if (!deliveryPartner || !deliveryPartner[0]._id) {
             setShowNoDeliveryPartnerModal(true);
             return;
           }
-          console.log( "orderId:", selectedItem.orderId,
-            "pickPackId:", selectedItem._id,
-            "deliveryPartnerId:", deliveryPartner[0]._id);
 
           await addDelivery({
-            orderId: selectedItem.orderId._id,
-            pickPackId: selectedItem._id,
+            orderId: selectedItem.Order.id,
+            pickPackId: selectedItem.id,
             deliveryPartnerId: deliveryPartner[0]._id,
             eligibleAreas: deliveryPartner[0].eligibleAreas,
-            deliverySlot: selectedItem.orderId.slot || '10:00 AM - 12:00 PM',
+            deliverySlot: selectedItem.Order.deliveryTime || '10:00 AM - 12:00 PM',
           });
         }
-        await updateDeliveryStatus(selectedItem._id, newDeliveryStatus);
+        await updateDeliveryStatus(selectedItem.id, newDeliveryStatus);
         const updatedData = await fetchPickAndPack();
-        setPickAndPack(updatedData);
-        setFilteredPickAndPack(updatedData);
+        setPickAndPack(updatedData.pickAndPack);
+        setFilteredPickAndPack(updatedData.pickAndPack);
         handleCloseModal();
       } catch (error) {
         console.error('Error updating delivery status:', error);
       }
     }
   };
+
+  const handleDownloadPDF = async (id: string) => {
+    try {
+      const updatedRecord = await markAsPacked(id);
+      if (updatedRecord.pickAndPack.dataPageUrl) {
+        window.open(updatedRecord.pickAndPack.dataPageUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error marking as packed and downloading PDF:', error);
+    }
+  };
+
+  const columns: TableColumn<PickAndPackItem>[] = [
+    { name: 'Order Code', selector: row => row.Order.id.toString(), sortable: true },
+    { name: 'Total Price', selector: row => `₹${row.Order.totalAmount}`, sortable: true },
+    { name: 'Order Type', selector: row => row.orderSize, sortable: true },
+    { name: 'Delivery Status', selector: row => (row.packed ? 'Packed' : 'Not Packed'), sortable: true },
+    { name: 'Order Accepted On', selector: row => new Date(row.createdAt).toLocaleDateString(), sortable: true },
+    {
+      name: 'Actions',
+      cell: row => (
+        <Button variant="contained" color="primary" size="small" onClick={() => handleDownloadPDF(row.Order.id)} disabled={row.packed}>
+          Mark as packed
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <Container>
@@ -124,35 +164,25 @@ const PickAndPack = () => {
           className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
           placeholder="Search pick and pack..."
         />
+        <Select
+          value={packedFilter}
+          onChange={handlePackedFilterChange}
+          displayEmpty
+          className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
+        >
+          <MenuItem value="all">All</MenuItem>
+          <MenuItem value="true">Packed</MenuItem>
+          <MenuItem value="false">Not Packed</MenuItem>
+        </Select>
       </Box>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Order Code</TableCell>
-              <TableCell>Total Price</TableCell>
-              <TableCell>Order Type</TableCell>
-              <TableCell>Delivery Status</TableCell>
-              <TableCell>Packed Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPickAndPack.map(item => (
-              <TableRow key={item._id}>
-                <TableCell>{item.orderId.order_code}</TableCell>
-                <TableCell>₹{item.orderId.totalPrice}</TableCell>
-                <TableCell>{item.orderType}</TableCell>
-                <TableCell>
-                  <Button onClick={() => handleOpenModal(item)}>
-                    {item.deliveryStatus}
-                  </Button>
-                </TableCell>
-                <TableCell>{new Date(item.packedDate).toLocaleDateString()}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={filteredPickAndPack}
+        pagination
+        highlightOnHover
+        pointerOnHover
+        striped
+      />
       <Modal open={!!selectedItem} onClose={handleCloseModal}>
         <Box
           position="absolute"

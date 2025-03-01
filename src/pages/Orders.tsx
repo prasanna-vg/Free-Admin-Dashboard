@@ -1,45 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { fetchOrders, updateOrder, createPickAndPack } from '../utils/apiService';
+import { fetchOrders, updateOrder, createPickAndPack, acceptOrder, rejectOrder } from '../utils/apiService';
 import {
   Container,
   Typography,
   Box,
   TextField,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
   Modal,
   Select,
   MenuItem,
 } from '@mui/material';
-import { HiOutlineChevronRight, HiOutlineSearch, HiOutlineEye, HiOutlinePencil } from 'react-icons/hi';
+import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus } from 'react-icons/hi';
+import DataTable, { TableColumn } from 'react-data-table-component';
 import { AiOutlineExport } from 'react-icons/ai';
 
+interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  unit: string;
+  price: number;
+  subtotal: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Order {
-  _id: string;
-  orderItems: { quantity: number; unitPrice: number; productId: string }[];
-  shippingAddress1: string;
-  shippingAddress2: string;
-  city: string;
-  zip: string;
-  country: string;
-  phone: string;
-  status: string;
-  user: string;
-  slot: string;
-  bulkOrder: boolean;
-  order_code: string;
-  google_location_link: string;
-  order_additional_comments: string;
-  dateOrdered: string;
-  returnStatus?: string;
-  returnReason?: string;
+  id: string;
+  userId: string;
+  totalAmount: number;
+  GST: number;
+  deliveryTime: string;
+  deliveryType: string;
+  deliveryDate: string;
+  deliveryCharge: number;
+  paymentStatus: string;
+  orderStatus: string;
+  orderCancelledReason: string | null;
+  orderRejectedReason: string | null;
+  deliveryAddresses: string;
+  order_additional_comments: string | null;
+  createdAt: string;
+  updatedAt: string;
+  OrderItems: OrderItem[];
 }
 
 const Orders = () => {
@@ -56,8 +60,8 @@ const Orders = () => {
     const getOrders = async () => {
       try {
         const data = await fetchOrders();
-        setOrders(data);
-        setFilteredOrders(data);
+        setOrders(data.orders);
+        setFilteredOrders(data.orders);
       } catch (error) {
         console.error('Error fetching orders:', error);
       }
@@ -68,7 +72,7 @@ const Orders = () => {
 
   useEffect(() => {
     const filtered = orders.filter(order =>
-      order.order_code.toLowerCase().includes(searchQuery.toLowerCase())
+      order.id.toString().includes(searchQuery.toLowerCase())
     );
     setFilteredOrders(filtered);
   }, [searchQuery, orders]);
@@ -79,8 +83,8 @@ const Orders = () => {
 
   const handleSortChange = () => {
     const sorted = [...filteredOrders].sort((a, b) => {
-      const dateA = new Date(a.dateOrdered).getTime();
-      const dateB = new Date(b.dateOrdered).getTime();
+      const dateA = new Date(a.deliveryDate).getTime();
+      const dateB = new Date(b.deliveryDate).getTime();
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
     setFilteredOrders(sorted);
@@ -90,8 +94,8 @@ const Orders = () => {
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setEditOrder(order);
-    setReturnStatus(order.returnStatus || '');
-    setReturnReason(order.returnReason || '');
+    setReturnStatus(order.orderStatus || '');
+    setReturnReason(order.orderRejectedReason || '');
   };
 
   const handleCloseModal = () => {
@@ -104,16 +108,16 @@ const Orders = () => {
   const handleUpdateOrder = async () => {
     if (editOrder) {
       try {
-        await updateOrder(editOrder._id, { status: editOrder.status, returnReason });
-        if (editOrder.status === 'Received') {
+        await updateOrder(editOrder.id, { status: editOrder.orderStatus, returnReason });
+        if (editOrder.orderStatus === 'Received') {
           await createPickAndPack({
-            orderId: editOrder._id,
-            orderType: editOrder.bulkOrder ? 'Large' : 'Small',
+            orderId: editOrder.id,
+            orderType: editOrder.deliveryType === 'free' ? 'Small' : 'Large',
           });
         }
         const updatedData = await fetchOrders();
-        setOrders(updatedData);
-        setFilteredOrders(updatedData);
+        setOrders(updatedData.orders);
+        setFilteredOrders(updatedData.orders);
         handleCloseModal();
       } catch (error) {
         console.error('Error updating order:', error);
@@ -123,9 +127,54 @@ const Orders = () => {
 
   const handleStatusChange = (e: React.ChangeEvent<{ value: unknown }>) => {
     if (editOrder) {
-      setEditOrder({ ...editOrder, status: e.target.value as string });
+      setEditOrder({ ...editOrder, orderStatus: e.target.value as string });
     }
   };
+
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      await acceptOrder(orderId);
+      const updatedData = await fetchOrders();
+      setOrders(updatedData.orders);
+      setFilteredOrders(updatedData.orders);
+    } catch (error) {
+      console.error('Error accepting order:', error);
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string) => {
+    try {
+      await rejectOrder(orderId);
+      const updatedData = await fetchOrders();
+      setOrders(updatedData.orders);
+      setFilteredOrders(updatedData.orders);
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+    }
+  };
+
+  const columns: TableColumn<Order>[] = [
+    { name: 'Order ID', selector: row => row.id.toString(), sortable: true },
+    { name: 'Order Status', selector: row => row.orderStatus, sortable: true },
+    { name: 'Total Amount', selector: row => `₹${row.totalAmount}`, sortable: true },
+    { name: 'Delivery Date', selector: row => new Date(row.deliveryDate).toLocaleDateString(), sortable: true },
+    {
+      name: 'Actions',
+      cell: row => (
+        <div className="flex">
+          <Button variant="contained" size="small" style={{margin:'8px'}} color="primary" onClick={() => handleAcceptOrder(row.id)} disabled={row.orderStatus === 'accepted'}>
+            Accept
+          </Button>
+          <Button variant="contained" size="small" style={{margin:'8px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected'}>
+            Reject
+          </Button>
+          <Button variant="contained" size="small" style={{margin:'8px'}} color="default" onClick={() => handleViewOrder(row)}>
+            View
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Container>
@@ -149,37 +198,14 @@ const Orders = () => {
           Export Orders
         </Button>
       </Box>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Order Code</TableCell>
-              <TableCell>Order Status</TableCell>
-              <TableCell>Total Price</TableCell>
-              <TableCell>Date Ordered</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredOrders.map(order => (
-              <TableRow key={order._id} style={{ backgroundColor: order.bulkOrder ? '#ffcccc' : 'inherit' }}>
-                <TableCell>{order.order_code}</TableCell>
-                <TableCell>{order.status}</TableCell>
-                <TableCell>₹{order.totalPrice}</TableCell>
-                <TableCell>{new Date(order.dateOrdered).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  {/* <IconButton color="primary" onClick={() => handleViewOrder(order)}>
-                    <HiOutlineEye />
-                  </IconButton> */}
-                  <IconButton color="primary" onClick={() => handleViewOrder(order)}>
-                    <HiOutlinePencil />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={filteredOrders}
+        pagination
+        highlightOnHover
+        pointerOnHover
+        striped
+      />
       <Modal open={!!selectedOrder} onClose={handleCloseModal}>
         <Box
           position="absolute"
@@ -200,81 +226,49 @@ const Orders = () => {
                 Order Details
               </Typography>
               <TextField
-                label="Order Code"
-                name="order_code"
-                value={editOrder.order_code}
+                label="Order ID"
+                name="order_id"
+                value={editOrder.id}
                 fullWidth
                 margin="normal"
                 disabled
               />
               <TextField
-                label="Total Price"
-                name="totalPrice"
-                value={editOrder.totalPrice}
+                label="Total Amount"
+                name="totalAmount"
+                value={editOrder.totalAmount}
                 fullWidth
                 margin="normal"
                 disabled
               />
               <TextField
-                label="Shipping Address 1"
-                name="shippingAddress1"
-                value={editOrder.shippingAddress1}
+                label="Delivery Date"
+                name="deliveryDate"
+                value={new Date(editOrder.deliveryDate).toLocaleDateString()}
                 fullWidth
                 margin="normal"
                 disabled
               />
               <TextField
-                label="Shipping Address 2"
-                name="shippingAddress2"
-                value={editOrder.shippingAddress2}
+                label="Delivery Time"
+                name="deliveryTime"
+                value={editOrder.deliveryTime}
                 fullWidth
                 margin="normal"
                 disabled
               />
               <TextField
-                label="City"
-                name="city"
-                value={editOrder.city}
+                label="Delivery Type"
+                name="deliveryType"
+                value={editOrder.deliveryType}
                 fullWidth
                 margin="normal"
                 disabled
               />
               <TextField
-                label="Zip"
-                name="zip"
-                value={editOrder.zip}
-                fullWidth
-                margin="normal"
-                disabled
-              />
-              <TextField
-                label="Country"
-                name="country"
-                value={editOrder.country}
-                fullWidth
-                margin="normal"
-                disabled
-              />
-              <TextField
-                label="Phone"
-                name="phone"
-                value={editOrder.phone}
-                fullWidth
-                margin="normal"
-                disabled
-              />
-              <TextField
-                label="Slot"
-                name="slot"
-                value={editOrder.slot}
-                fullWidth
-                margin="normal"
-                disabled
-              />
-              <TextField
-                label="Google Location Link"
-                name="google_location_link"
-                value={editOrder.google_location_link}
+                label="Payment Status"
+                name="paymentStatus"
+                value={editOrder.paymentStatus}
                 fullWidth
                 margin="normal"
                 disabled
@@ -282,7 +276,7 @@ const Orders = () => {
               <TextField
                 label="Additional Comments"
                 name="order_additional_comments"
-                value={editOrder.order_additional_comments}
+                value={editOrder.order_additional_comments || ''}
                 fullWidth
                 margin="normal"
                 disabled
@@ -291,35 +285,30 @@ const Orders = () => {
                 <strong>Status:</strong>
               </Typography>
               <Select
-                value={editOrder.status}
+                value={editOrder.orderStatus}
                 onChange={handleStatusChange}
                 fullWidth
                 margin="normal"
               >
-                <MenuItem value="Awaiting">Awaiting</MenuItem>
-                <MenuItem value="Received">Received</MenuItem>
-                <MenuItem value="Processed">Processed</MenuItem>
-                <MenuItem value="Shipped">Shipped</MenuItem>
-                <MenuItem value="Delivered">Delivered</MenuItem>
-                <MenuItem value="Canceled">Canceled</MenuItem>
-                <MenuItem value="Returned">Returned</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="accepted">Accepted</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+                <MenuItem value="shipped">Shipped</MenuItem>
+                <MenuItem value="delivered">Delivered</MenuItem>
+                <MenuItem value="canceled">Canceled</MenuItem>
+                <MenuItem value="returned">Returned</MenuItem>
               </Select>
-              {editOrder.status === 'Returned' && (
+              {editOrder.orderStatus === 'rejected' && (
                 <>
                   <Typography variant="body1">
-                    <strong>Return Reason:</strong>
+                    <strong>Rejection Reason:</strong>
                   </Typography>
-                  <Select
+                  <TextField
                     value={returnReason}
-                    onChange={(e) => setReturnReason(e.target.value as string)}
+                    onChange={(e) => setReturnReason(e.target.value)}
                     fullWidth
                     margin="normal"
-                  >
-                    <MenuItem value="Vendor Reason">Vendor Reason</MenuItem>
-                    <MenuItem value="Customer Reason">Customer Reason</MenuItem>
-                    <MenuItem value="Pick & Pack Reason">Pick & Pack Reason</MenuItem>
-                    <MenuItem value="Delivery Reason">Delivery Reason</MenuItem>
-                  </Select>
+                  />
                 </>
               )}
               <Button

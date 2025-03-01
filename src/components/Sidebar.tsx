@@ -74,9 +74,9 @@ const Sidebar = () => {
           <ListItemIcon sx={{ color: 'inherit' }}>
             <HiOutlineTag />
           </ListItemIcon>
-          <ListItemText primary="Categories" />
+          <ListItemText primary="Data" />
         </ListItem>
-        <ListItem
+        {/* <ListItem
           button
           component={NavLink}
           to="/subcategories"
@@ -103,7 +103,7 @@ const Sidebar = () => {
             <HiOutlineDeviceMobile />
           </ListItemIcon>
           <ListItemText primary="Products" />
-        </ListItem>
+        </ListItem> */}
         <ListItem
           button
           component={NavLink}

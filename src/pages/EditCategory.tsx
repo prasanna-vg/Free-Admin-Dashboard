@@ -2,23 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchCategoryById, updateCategory } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal } from '@mui/material';
-import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineUpload, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 interface Category {
-  _id: string;
+  id: string;
   name: string;
-  color: string;
-  images: string[];
+  image: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const EditCategory = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category>({
-    _id: '',
+    id: '',
     name: '',
-    color: '',
-    images: [],
+    image: '',
+    createdAt: '',
+    updatedAt: '',
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -26,7 +28,9 @@ const EditCategory = () => {
     const getCategory = async (categoryId: string) => {
       try {
         const data = await fetchCategoryById(categoryId);
-        setCategory(data);
+        console.log("data", data.data);
+        setCategory(data.data);
+        console.log("category---", category);
       } catch (error) {
         console.error('Error fetching category:', error);
       }
@@ -43,20 +47,18 @@ const EditCategory = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setCategory({ ...category, images: [...category.images, URL.createObjectURL(file)] });
+      setCategory({ ...category, image: URL.createObjectURL(file) });
     }
   };
 
-  const handleDeleteImage = (index: number) => {
-    const newImages = category.images.filter((_, i) => i !== index);
-    setCategory({ ...category, images: newImages });
+  const handleDeleteImage = () => {
+    setCategory({ ...category, image: '' });
   };
 
   const handleUpdateCategory = async () => {
     const formData = new FormData();
     formData.append('name', category.name);
-    formData.append('color', category.color);
-    formData.append('images', JSON.stringify(category.images));
+    formData.append('image', category.image);
 
     try {
       await updateCategory(id!, formData);
@@ -93,14 +95,6 @@ const EditCategory = () => {
           fullWidth
           margin="normal"
         />
-        {/* <TextField
-          label="Color"
-          name="color"
-          value={category.color}
-          onChange={handleInputChange}
-          fullWidth
-          margin="normal"
-        /> */}
         <Box mt={2}>
           <Button variant="contained" component="label">
             Upload Image
@@ -110,19 +104,17 @@ const EditCategory = () => {
               onChange={handleImageChange}
             />
           </Button>
-          <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-            {category.images.map((image, index) => (
-              <Box key={index} position="relative" display="inline-block">
-                <img src={image} alt={`category-${index}`} style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(image)} />
-                <IconButton
-                  style={{ position: 'absolute', top: 0, right: 0 }}
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <HiOutlineTrash />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
+          {category.image && (
+            <Box mt={2} position="relative" display="inline-block">
+              <img src={category.image} alt="category" style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(category.image)} />
+              <IconButton
+                style={{ position: 'absolute', top: 0, right: 0 }}
+                onClick={handleDeleteImage}
+              >
+                <HiOutlineTrash />
+              </IconButton>
+            </Box>
+          )}
         </Box>
         <Button variant="contained" color="primary" onClick={handleUpdateCategory} startIcon={<HiOutlineSave />}>
           Update Category

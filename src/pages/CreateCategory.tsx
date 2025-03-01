@@ -8,8 +8,7 @@ const CreateCategory = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState({
     name: '',
-    color: '',
-    images: [],
+    image: '',
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -21,27 +20,28 @@ const CreateCategory = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setCategory({ ...category, images: [...category.images, file] });
+      setCategory({ ...category, image: file });
     }
   };
 
-  const handleDeleteImage = (index: number) => {
-    const newImages = category.images.filter((_, i) => i !== index);
-    setCategory({ ...category, images: newImages });
+  const handleDeleteImage = () => {
+    setCategory({ ...category, image: '' });
   };
 
   const handleCreateCategory = async () => {
     const formData = new FormData();
     formData.append('name', category.name);
-    formData.append('color', category.color);
-
-    for (let i = 0; i < category.images.length; i++) {
-      formData.append('images', category.images[i]);
-    }
+    formData.append('image', category.image);
 
     try {
-      await createCategory(formData);
-      navigate('/categories');
+      const response = await createCategory(formData);
+      if (response.success) {
+        setCategory({
+          name: response.category.name,
+          image: response.category.image,
+        });
+        navigate('/categories');
+      }
     } catch (error) {
       console.error('Error creating category:', error);
     }
@@ -74,14 +74,6 @@ const CreateCategory = () => {
           fullWidth
           margin="normal"
         />
-        {/* <TextField
-          label="Color"
-          name="color"
-          value={category.color}
-          onChange={handleInputChange}
-          fullWidth
-          margin="normal"
-        /> */}
         <Box mt={2}>
           <Button variant="contained" component="label">
             Upload Image
@@ -91,19 +83,17 @@ const CreateCategory = () => {
               onChange={handleImageChange}
             />
           </Button>
-          <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-            {category.images.map((image, index) => (
-              <Box key={index} position="relative" display="inline-block">
-                <img src={URL.createObjectURL(image)} alt={`category-${index}`} style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(URL.createObjectURL(image))} />
-                <IconButton
-                  style={{ position: 'absolute', top: 0, right: 0 }}
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <HiOutlineTrash />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
+          {category.image && (
+            <Box mt={2} position="relative" display="inline-block">
+              <img src={URL.createObjectURL(category.image)} alt="category" style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(URL.createObjectURL(category.image))} />
+              <IconButton
+                style={{ position: 'absolute', top: 0, right: 0 }}
+                onClick={handleDeleteImage}
+              >
+                <HiOutlineTrash />
+              </IconButton>
+            </Box>
+          )}
         </Box>
         <Button variant="contained" color="primary" onClick={handleCreateCategory} startIcon={<HiOutlineSave />}>
           Create Category

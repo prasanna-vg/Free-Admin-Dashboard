@@ -7,7 +7,7 @@ import { login } from '../utils/apiService';
 import { useAuth } from '../context/AuthContext';
 
 const LoginComponent = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const LoginComponent = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await login(email, password);
+      const response = await login(identifier, password);
       console.log("response", response); // Log the entire response object
       const token = response.token; // Assuming the token is returned in response.token
       console.log("token", token);
@@ -35,8 +35,8 @@ const LoginComponent = () => {
           Welcome to the dashboard!
         </h2>
         <div className="w-full flex flex-col gap-5">
-          <InputWithLabel label="Email">
-            <SimpleInput type="email" placeholder="Enter a email..." value={email} onChange={(e) => setEmail(e.target.value)} />
+          <InputWithLabel label="Identifier">
+            <SimpleInput type="identifier" placeholder="Enter a email..." value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
           </InputWithLabel>
 
           <InputWithLabel label="Password">
