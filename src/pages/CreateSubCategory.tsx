@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createSubCategory, fetchCategories } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateSubCategory = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { categoryId } = location.state || {};
   const [subCategory, setSubCategory] = useState({
     name: '',
-    color: '',
-    category: '',
-    images: [],
+    category: categoryId || '',
+    image: null,
   });
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,23 +42,20 @@ const CreateSubCategory = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSubCategory({ ...subCategory, images: [...subCategory.images, file] });
+      setSubCategory({ ...subCategory, image: file });
     }
   };
 
-  const handleDeleteImage = (index: number) => {
-    const newImages = subCategory.images.filter((_, i) => i !== index);
-    setSubCategory({ ...subCategory, images: newImages });
+  const handleDeleteImage = () => {
+    setSubCategory({ ...subCategory, image: null });
   };
 
   const handleCreateSubCategory = async () => {
     const formData = new FormData();
     formData.append('name', subCategory.name);
-    formData.append('color', subCategory.color);
-    formData.append('category', subCategory.category);
-
-    for (let i = 0; i < subCategory.images.length; i++) {
-      formData.append('images', subCategory.images[i]);
+    formData.append('categoryId', subCategory.category);
+    if (subCategory.image) {
+      formData.append('image', subCategory.image);
     }
 
     try {
@@ -95,14 +93,6 @@ const CreateSubCategory = () => {
           fullWidth
           margin="normal"
         />
-        {/* <TextField
-          label="Color"
-          name="color"
-          value={subCategory.color}
-          onChange={handleInputChange}
-          fullWidth
-          margin="normal"
-        /> */}
         <FormControl fullWidth margin="normal">
           <InputLabel>Category</InputLabel>
           <Select
@@ -114,7 +104,7 @@ const CreateSubCategory = () => {
               <em>Select Category</em>
             </MenuItem>
             {categories.map(category => (
-              <MenuItem key={category._id} value={category._id}>
+              <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
             ))}
@@ -129,19 +119,22 @@ const CreateSubCategory = () => {
               onChange={handleImageChange}
             />
           </Button>
-          <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-            {subCategory.images.map((image, index) => (
-              <Box key={index} position="relative" display="inline-block">
-                <img src={URL.createObjectURL(image)} alt={`subcategory-${index}`} style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(URL.createObjectURL(image))} />
-                <IconButton
-                  style={{ position: 'absolute', top: 0, right: 0 }}
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <HiOutlineTrash />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
+          {subCategory.image && (
+            <Box mt={2} position="relative" display="inline-block">
+              <img
+                src={URL.createObjectURL(subCategory.image)}
+                alt="subcategory"
+                style={{ width: '100px', marginRight: '10px' }}
+                onClick={() => handleImageClick(URL.createObjectURL(subCategory.image))}
+              />
+              <IconButton
+                style={{ position: 'absolute', top: 0, right: 0 }}
+                onClick={handleDeleteImage}
+              >
+                <HiOutlineTrash />
+              </IconButton>
+            </Box>
+          )}
         </Box>
         <Button variant="contained" color="primary" onClick={handleCreateSubCategory} startIcon={<HiOutlineSave />}>
           Create SubCategory

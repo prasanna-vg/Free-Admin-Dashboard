@@ -2,37 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchSubCategoryById, updateSubCategory, fetchCategories } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineArrowLeft } from 'react-icons/hi';
 
 interface SubCategory {
-  _id: string;
+  id: string;
   name: string;
-  color: string;
-  category: string;
-  images: (string | File)[];
+  categoryId: string;
+  image: string | File;
 }
 
 const EditSubCategory = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [subCategory, setSubCategory] = useState<SubCategory>({
-    _id: '',
+    id: '',
     name: '',
-    color: '',
-    category: '',
-    images: [],
+    categoryId: '',
+    image: '',
   });
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const getSubCategory = async (subCategoryId: string) => {
       try {
-        const data = await fetchSubCategoryById(subCategoryId);
-        setSubCategory({
-          ...data,
-          category: data.category._id,
-        });
+        const response = await fetchSubCategoryById(subCategoryId);
+        if (response.success) {
+          setSubCategory({
+            id: response.data.id,
+            name: response.data.name,
+            categoryId: response.data.categoryId.toString(),
+            image: response.data.image,
+          });
+        }
       } catch (error) {
         console.error('Error fetching subcategory:', error);
       }
@@ -58,34 +60,28 @@ const EditSubCategory = () => {
 
   const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
     const { value } = e.target;
-    setSubCategory({ ...subCategory, category: value as string });
+    setSubCategory({ ...subCategory, categoryId: value as string });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSubCategory({ ...subCategory, images: [...subCategory.images, file] });
+      setSubCategory({ ...subCategory, image: file });
     }
   };
 
-  const handleDeleteImage = (index: number) => {
-    const newImages = subCategory.images.filter((_, i) => i !== index);
-    setSubCategory({ ...subCategory, images: newImages });
+  const handleDeleteImage = () => {
+    setSubCategory({ ...subCategory, image: '' });
   };
 
   const handleUpdateSubCategory = async () => {
     const formData = new FormData();
     formData.append('name', subCategory.name);
-    formData.append('color', subCategory.color);
-    formData.append('category', subCategory.category);
+    formData.append('categoryId', subCategory.categoryId);
 
-    subCategory.images.forEach((image) => {
-      if (typeof image === 'string') {
-        formData.append('existingImages', image);
-      } else {
-        formData.append('images', image);
-      }
-    });
+    if (typeof subCategory.image !== 'string') {
+      formData.append('image', subCategory.image);
+    }
 
     try {
       await updateSubCategory(id!, formData);
@@ -122,26 +118,18 @@ const EditSubCategory = () => {
           fullWidth
           margin="normal"
         />
-        <TextField
-          label="Color"
-          name="color"
-          value={subCategory.color}
-          onChange={handleInputChange}
-          fullWidth
-          margin="normal"
-        />
         <FormControl fullWidth margin="normal">
           <InputLabel>Category</InputLabel>
           <Select
-            name="category"
-            value={subCategory.category}
+            name="categoryId"
+            value={subCategory.categoryId}
             onChange={handleCategoryChange}
           >
             <MenuItem value="">
               <em>Select Category</em>
             </MenuItem>
             {categories.map(category => (
-              <MenuItem key={category._id} value={category._id}>
+              <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
             ))}
@@ -156,26 +144,24 @@ const EditSubCategory = () => {
               onChange={handleImageChange}
             />
           </Button>
-          <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-            {subCategory.images.map((image, index) => (
-              <Box key={index} position="relative" display="inline-block">
-                <img
-                  src={typeof image === 'string' ? image : URL.createObjectURL(image)}
-                  alt={`subcategory-${index}`}
-                  style={{ width: '100px', marginRight: '10px' }}
-                  onClick={() => handleImageClick(typeof image === 'string' ? image : URL.createObjectURL(image))}
-                />
-                <IconButton
-                  style={{ position: 'absolute', top: 0, right: 0 }}
-                  onClick={() => handleDeleteImage(index)}
-                >
-                  <HiOutlineTrash />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
+          {subCategory.image && (
+            <Box mt={2} position="relative" display="inline-block">
+              <img
+                src={typeof subCategory.image === 'string' ? subCategory.image : URL.createObjectURL(subCategory.image)}
+                alt="subcategory"
+                style={{ width: '100px', marginRight: '10px' }}
+                onClick={() => handleImageClick(typeof subCategory.image === 'string' ? subCategory.image : URL.createObjectURL(subCategory.image))}
+              />
+              <IconButton
+                style={{ position: 'absolute', top: 0, right: 0 }}
+                onClick={handleDeleteImage}
+              >
+                <HiOutlineTrash />
+              </IconButton>
+            </Box>
+          )}
         </Box>
-        <Button variant="contained" color="primary" onClick={handleUpdateSubCategory} startIcon={<HiOutlineSave />}>
+        <Button variant="contained" color="primary" onClick={handleUpdateSubCategory}>
           Update SubCategory
         </Button>
       </Box>

@@ -31,7 +31,9 @@ const CreateCategory = () => {
   const handleCreateCategory = async () => {
     const formData = new FormData();
     formData.append('name', category.name);
-    formData.append('image', category.image);
+    if (category.image) {
+      formData.append('image', category.image);
+    }
 
     try {
       const response = await createCategory(formData);

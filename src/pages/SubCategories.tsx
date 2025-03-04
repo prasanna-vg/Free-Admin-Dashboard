@@ -20,16 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus, HiOutlineArrowLeft } from 'react-icons/hi';
 
 interface SubCategory {
-  _id: string;
+  id: string;
   name: string;
-  color: string;
-  category: {
-    _id: string;
-    name: string;
-    color: string;
-    images: string[];
-    added_on: string;
-  };
+  categoryId: string;
   images: string[];
   added_on: string;
 }
@@ -95,8 +88,8 @@ const SubCategories = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteSubCategory(id);
-      setSubCategories(subCategories.filter(subCategory => subCategory._id !== id));
-      setFilteredSubCategories(filteredSubCategories.filter(subCategory => subCategory._id !== id));
+      setSubCategories(subCategories.filter(subCategory => subCategory.id !== id));
+      setFilteredSubCategories(filteredSubCategories.filter(subCategory => subCategory.id !== id));
     } catch (error) {
       console.error('Error deleting subcategory:', error);
     }
@@ -115,7 +108,7 @@ const SubCategories = () => {
   };
   const getCategoryName = (categoryId: string) => {
     if (!categories) return 'Unknown Category';
-    const category = categories.find((cat) => cat._id === categoryId);
+    const category = categories.find((cat) => cat.id === categoryId);
     return category ? category.name : 'Unknown Category';
   };
 
@@ -157,14 +150,14 @@ const SubCategories = () => {
           </TableHead>
           <TableBody>
             {filteredSubCategories.map(subCategory => (
-              <TableRow key={subCategory._id}>
+              <TableRow key={subCategory.id}>
                 <TableCell>{subCategory.name}</TableCell>
                 <TableCell>{subCategory.category.name}</TableCell>
                 <TableCell>
                   {subCategory.images.length > 0 && (
                     <img
                       src={subCategory.images[0]}
-                      alt={`subcategory-${subCategory._id}`}
+                      alt={`subcategory-${subCategory.id}`}
                       style={{ width: '100px', cursor: 'pointer' }}
                       onClick={() => handleImageClick(subCategory.images[0])}
                     />
@@ -172,10 +165,10 @@ const SubCategories = () => {
                 </TableCell>
                 <TableCell>{new Date(subCategory.added_on).toLocaleDateString()}</TableCell>
                 <TableCell className='flex'>
-                  <IconButton color="primary" onClick={() => handleEdit(subCategory._id)}>
+                  <IconButton color="primary" onClick={() => handleEdit(subCategory.id)}>
                     <HiOutlinePencil />
                   </IconButton>
-                  <IconButton color="secondary" onClick={() => handleDelete(subCategory._id)}>
+                  <IconButton color="secondary" onClick={() => handleDelete(subCategory.id)}>
                     <HiOutlineTrash />
                   </IconButton>
                 </TableCell>

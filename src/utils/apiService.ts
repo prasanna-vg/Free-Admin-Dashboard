@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const API_BASE_URL = 'http://34.45.81.207:3001/api';
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = 'https://appdoer.store:3001/api';
+// const API_BASE_URL = "http://localhost:3001/api";
 
 // Add a request interceptor
 axios.interceptors.request.use(
