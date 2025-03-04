@@ -27,6 +27,7 @@ export const login = async (identifier: string, password: string) => {
   console.log(response.data);
   // Store the token in local storage
   localStorage.setItem("token", response.data.token);
+  localStorage.setItem("userId", response.data.userWithoutPassword.id);
   return response.data;
 };
 export const fetchProducts = async () => {
@@ -84,6 +85,14 @@ export const updateProduct = async (id: string, productData: FormData) => {
 export const createProduct = async (productData: any) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/products`, productData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+export const fetchGroupedSubCategoriesByCategory = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/subcategories/grouped/by-category`);
     return response.data;
   } catch (error) {
     throw error;
@@ -275,14 +284,22 @@ export const fetchUserAnalytics = async () => {
   }
 };
 
-export const fetchInventory = async () => {
+export const fetchInventoryItems = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/inventory`);
+    const response = await axios.get(`${API_BASE_URL}/inventories`);
     return response.data;
   } catch (error) {
     console.error("Error fetching inventory:", error);
     throw error;
   }
+};
+export const createInventory = async (productId: number, quantity: number) => {
+  const response = await axios.post(`${API_BASE_URL}/inventories`, {
+    userId : 1,
+    productId,
+    quantity,
+  });
+  return response.data;
 };
 
 export const fetchPickAndPack = async () => {

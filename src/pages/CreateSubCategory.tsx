@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createSubCategory, fetchCategories } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal,  FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateSubCategory = () => {
@@ -19,8 +19,10 @@ const CreateSubCategory = () => {
   useEffect(() => {
     const getCategories = async () => {
       try {
-        const data = await fetchCategories();
-        setCategories(data);
+        const response = await fetchCategories();
+        if (response.success) {
+          setCategories(response.categories);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -60,7 +62,7 @@ const CreateSubCategory = () => {
 
     try {
       await createSubCategory(formData);
-      navigate('/subcategories');
+      navigate('/categories');
     } catch (error) {
       console.error('Error creating subcategory:', error);
     }

@@ -1,216 +1,151 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { fetchProductById, updateProduct, fetchCategoriesWithSubcategories } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { HiOutlineTrash, HiOutlinePlus, HiOutlineArrowLeft } from 'react-icons/hi';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  richDescription: string;
-  image: string | File;
-  images: (string | File)[];
-  brand: string;
-  price: number;
-  category: { _id: string; name: string } | null;
-  subCategory: { _id: string; name: string } | null;
-  countInStock: number;
-  rating: number;
-  numReviews: number;
-  isFeatured: boolean;
-  quantities: { unit: string; price: number }[];
-  details: { title: string; content: string; id: string }[];
-  dateCreated: string;
-}
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { fetchProductById, updateProduct, fetchGroupedSubCategoriesByCategory } from '../utils/apiService';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const EditProduct = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [product, setProduct] = useState<Product>({
-    id: '',
+  const location = useLocation();
+  const { categoryId, subCategoryId } = location.state || {};
+  const [product, setProduct] = useState({
     name: '',
     description: '',
-    richDescription: '',
-    image: '',
-    images: [],
-    brand: '',
+    categoryId: categoryId || '',
+    subCategoryId: subCategoryId || '',
+    measureType: '',
     price: 0,
-    category: null,
-    subCategory: null,
-    countInStock: 0,
-    rating: 0,
-    numReviews: 0,
-    isFeatured: false,
-    quantities: [],
-    details: [],
-    dateCreated: '',
+    unitCountperquantity: 0,
+    minQty: 0,
+    isNewArrival: false,
+    isOnDeal: false,
+    images: [],
+    dealDetails: {
+      discount: 0,
+      dealExpiry: '',
+    },
+    additionalDetails: [],
   });
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
+  const [groupedSubCategories, setGroupedSubCategories] = useState<any>({});
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const getProduct = async () => {
       try {
-        const data = await fetchProductById(id!);
-        const quantitiesArray = Object.entries(data.quantities).map(([unit, price]) => ({
-          unit,
-          price: Number(price),
-        }));
+        const dataed = await fetchProductById(id!);
+        const data = dataed.product;
+        console.log("Product", data);
         setProduct({
           ...data,
-          quantities: quantitiesArray,
-          details: Array.isArray(data.details) ? data.details : [],
+          categoryId: data.categoryId.toString(),
+          subCategoryId: data.subCategoryId.toString(),
+          dealDetails: data.dealDetails || { discount: 0, dealExpiry: '' },
+          additionalDetails: data.additionalDetails || [{ title: '', size: '' }],
         });
       } catch (error) {
         console.error('Error fetching product:', error);
       }
     };
-
-    const getCategoriesWithSubcategories = async () => {
+  
+    const getGroupedSubCategoriesByCategory = async () => {
       try {
-        const data = await fetchCategoriesWithSubcategories();
-        setCategories(data);
+        const response = await fetchGroupedSubCategoriesByCategory();
+        if (response.success) {
+          setGroupedSubCategories(response.groupedSubCategories);
+          console.log("groupedSub Cat", response.groupedSubCategories);
+        }
       } catch (error) {
-        console.error('Error fetching categories and subcategories:', error);
+        console.error('Error fetching grouped subcategories:', error);
       }
     };
-
+  
     getProduct();
-    getCategoriesWithSubcategories();
+    getGroupedSubCategoriesByCategory();
   }, [id]);
-
+  
   useEffect(() => {
-    if (product.category) {
-      const selectedCategory = categories.find((cat) => cat._id === product.category!._id);
-      if (selectedCategory) {
-        setSubCategories(selectedCategory.subCategories);
+    if (product.categoryId && groupedSubCategories[product.categoryId]) {
+      const subCategories = groupedSubCategories[product.categoryId].subCategories;
+      if (!subCategories.find(subCategory => subCategory.id === product.subCategoryId)) {
+        setProduct({ ...product, subCategoryId: '' });
       }
     }
-  }, [product.category, categories]);
+  }, [product.categoryId, groupedSubCategories]);
 
-  useEffect(() => {
-    const calculateLowestPrice = () => {
-      const prices = product.quantities.map((q) => (isNaN(Number(q.price)) ? 0 : Number(q.price)));
-      return prices.length > 0 ? Math.min(...prices) : 0;
-    };
-
-    const lowestPrice = calculateLowestPrice();
-    setProduct((prevProduct) => ({
-      ...prevProduct,
-      price: lowestPrice,
-    }));
-  }, [product.quantities]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProduct({ ...product, [name!]: value });
+    setProduct({ ...product, [name]: value });
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+    const { value } = e.target;
+    setProduct({ ...product, categoryId: value as string, subCategoryId: '' });
+  };
+
+  const handleSubCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+    const { value } = e.target;
+    setProduct({ ...product, subCategoryId: value as string });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setProduct({ ...product, image: file });
-    }
-  };
-
-  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setProduct({ ...product, images: [...product.images, ...files] });
+      setProduct({ ...product, images: files });
     }
   };
 
-  const handleDeleteImage = () => {
-    setProduct({ ...product, image: '' });
-  };
-
-  const handleDeleteImages = (index: number) => {
+  const handleDeleteImage = (index: number) => {
     const newImages = product.images.filter((_, i) => i !== index);
     setProduct({ ...product, images: newImages });
   };
 
-  const handleDetailChange = (index: number, field: string, value: string) => {
-    const newDetails = product.details.map((detail, i) =>
-      i === index ? { ...detail, [field]: value } : detail
-    );
-    setProduct({ ...product, details: newDetails });
+  const handleDealDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProduct({ ...product, dealDetails: { ...product.dealDetails, [name]: value } });
   };
 
-  const handleAddDetail = () => {
-    setProduct({
-      ...product,
-      details: [...product.details, { title: '', content: '', id: Date.now().toString() }],
-    });
+  const handleAdditionalDetailsChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const newAdditionalDetails = [...product.additionalDetails];
+    newAdditionalDetails[index] = { ...newAdditionalDetails[index], [name]: value };
+    setProduct({ ...product, additionalDetails: newAdditionalDetails });
   };
 
-  const handleDeleteDetail = (index: number) => {
-    const newDetails = product.details.filter((_, i) => i !== index);
-    setProduct({ ...product, details: newDetails });
+  const handleAddAdditionalDetail = () => {
+    setProduct({ ...product, additionalDetails: [...product.additionalDetails, { title: '', size: '' }] });
   };
 
-  const handleQuantityChange = (index: number, field: string, value: string) => {
-    const newQuantities = product.quantities.map((quantity, i) =>
-      i === index ? { ...quantity, [field]: value } : quantity
-    );
-    setProduct({ ...product, quantities: newQuantities });
+  const handleRemoveAdditionalDetail = (index: number) => {
+    const newAdditionalDetails = product.additionalDetails.filter((_, i) => i !== index);
+    setProduct({ ...product, additionalDetails: newAdditionalDetails });
   };
 
-  const handleAddQuantity = () => {
-    setProduct({
-      ...product,
-      quantities: [...product.quantities, { unit: '', price: 0 }],
-    });
-  };
-
-  const handleDeleteQuantity = (index: number) => {
-    const newQuantities = product.quantities.filter((_, i) => i !== index);
-    setProduct({ ...product, quantities: newQuantities });
-  };
-
-  const handleUpdateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateProduct = async () => {
     const formData = new FormData();
     formData.append('name', product.name);
     formData.append('description', product.description);
-    formData.append('richDescription', product.richDescription);
-    formData.append('brand', product.brand);
+    formData.append('categoryId', product.categoryId);
+    formData.append('subCategoryId', product.subCategoryId);
+    formData.append('measureType', product.measureType);
     formData.append('price', product.price.toString());
-    formData.append('category', product.category ? product.category._id : '');
-    formData.append('subCategory', product.subCategory ? product.subCategory._id : '');
-    formData.append('countInStock', product.countInStock.toString());
-    formData.append('rating', product.rating.toString());
-    formData.append('numReviews', product.numReviews.toString());
-    formData.append('isFeatured', product.isFeatured.toString());
-
-    const quantitiesObject = product.quantities.reduce((acc, { unit, price }) => {
-      acc[unit] = price;
-      return acc;
-    }, {});
-    formData.append('quantities', JSON.stringify(quantitiesObject));
-    formData.append('details', JSON.stringify(product.details));
-
-    if (product.image && typeof product.image !== 'string') {
-      formData.append('image', product.image);
-    } else if (!product.image) {
-      formData.append('image', '');
-    }
-
-    for (let i = 0; i < product.images.length; i++) {
-      if (typeof product.images[i] !== 'string') {
-        formData.append('images', product.images[i]);
-      }
-    }
-
-    // Handle the case where all images are deleted
-    if (product.images.length === 0) {
-      formData.append('images', '');
-    }
+    formData.append('unitCountperquantity', product.unitCountperquantity.toString());
+    formData.append('minQty', product.minQty.toString());
+    formData.append('isNewArrival', product.isNewArrival.toString());
+    formData.append('isOnDeal', product.isOnDeal.toString());
+    product.images.forEach((image, index) => {
+      formData.append(`images[${index}]`, image);
+    });
+    formData.append('dealDetails[discount]', product.dealDetails.discount.toString());
+    formData.append('dealDetails[dealExpiry]', product.dealDetails.dealExpiry);
+    product.additionalDetails.forEach((detail, index) => {
+      formData.append(`additionalDetails[${index}][title]`, detail.title);
+      formData.append(`additionalDetails[${index}][size]`, detail.size);
+    });
 
     try {
       await updateProduct(id!, formData);
-      navigate('/products');
+      navigate('/categories');
     } catch (error) {
       console.error('Error updating product:', error);
     }
@@ -234,60 +169,35 @@ const EditProduct = () => {
           Edit Product
         </Typography>
       </Box>
-      <form onSubmit={handleUpdateProduct}>
-        <FormControl fullWidth margin="normal">
-          <TextField
-            label="Product Name"
-            name="name"
-            value={product.name}
-            onChange={handleInputChange}
-          />
-        </FormControl>
-        <FormControl fullWidth margin="normal">
-          <TextField
-            label="Description"
-            name="description"
-            value={product.description}
-            onChange={handleInputChange}
-          />
-        </FormControl>
-        <FormControl fullWidth margin="normal">
-          <TextField
-            label="Rich Description"
-            name="richDescription"
-            value={product.richDescription}
-            onChange={handleInputChange}
-            multiline
-            rows={4}
-          />
-        </FormControl>
-        <FormControl fullWidth margin="normal">
-          <TextField
-            label="Brand"
-            name="brand"
-            value={product.brand}
-            onChange={handleInputChange}
-          />
-        </FormControl>
-        <FormControl fullWidth margin="normal">
-          <TextField
-            label="Price"
-            name="price"
-            type="number"
-            value={product.price}
-            onChange={handleInputChange}
-            disabled
-          />
-        </FormControl>
+      <Box component="form" noValidate autoComplete="off">
+        <TextField
+          label="Name"
+          name="name"
+          value={product.name}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Description"
+          name="description"
+          value={product.description}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
         <FormControl fullWidth margin="normal">
           <InputLabel>Category</InputLabel>
           <Select
-            name="category"
-            value={product.category ? product.category._id : ''}
-            onChange={(e) => setProduct({ ...product, category: { _id: e.target.value as string, name: '' } })}
+            name="categoryId"
+            value={product.categoryId}
+            onChange={handleCategoryChange}
           >
-            {categories.map((category) => (
-              <MenuItem key={category._id} value={category._id}>
+            <MenuItem value="">
+              <em>Select Category</em>
+            </MenuItem>
+            {Object.values(groupedSubCategories).map(category => (
+              <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
             ))}
@@ -296,151 +206,183 @@ const EditProduct = () => {
         <FormControl fullWidth margin="normal">
           <InputLabel>SubCategory</InputLabel>
           <Select
-            name="subCategory"
-            value={product.subCategory ? product.subCategory._id : ''}
-            onChange={(e) => setProduct({ ...product, subCategory: { _id: e.target.value as string, name: '' } })}
+            name="subCategoryId"
+            value={product.subCategoryId}
+            onChange={handleSubCategoryChange}
+            disabled={!product.categoryId}
           >
-            {subCategories.map((subCategory) => (
-              <MenuItem key={subCategory._id} value={subCategory._id}>
+            <MenuItem value="">
+              <em>Select SubCategory</em>
+            </MenuItem>
+            {product.categoryId && groupedSubCategories[product.categoryId]?.subCategories.map(subCategory => (
+              <MenuItem key={subCategory.id} value={subCategory.id}>
                 {subCategory.name}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
         <FormControl fullWidth margin="normal">
-          <TextField
-            label="Count In Stock"
-            name="countInStock"
-            type="number"
-            value={product.countInStock}
+          <InputLabel>Measure Type</InputLabel>
+          <Select
+            name="measureType"
+            value={product.measureType}
             onChange={handleInputChange}
-          />
+          >
+            <MenuItem value="">
+              <em>Select Measure Type</em>
+            </MenuItem>
+            <MenuItem value="unit-wise">Unit-wise</MenuItem>
+            <MenuItem value="weight-wise">Weight-wise</MenuItem>
+          </Select>
         </FormControl>
+        <TextField
+          label="Price"
+          name="price"
+          type="number"
+          value={product.price}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Unit Count per Quantity"
+          name="unitCountperquantity"
+          type="number"
+          value={product.unitCountperquantity}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Minimum Quantity"
+          name="minQty"
+          type="number"
+          value={product.minQty}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="isNewArrival"
+              checked={product.isNewArrival}
+              onChange={(e) => setProduct({ ...product, isNewArrival: e.target.checked })}
+            />
+          }
+          label="Is New Arrival"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="isOnDeal"
+              checked={product.isOnDeal}
+              onChange={(e) => setProduct({ ...product, isOnDeal: e.target.checked })}
+            />
+          }
+          label="Is On Deal"
+        />
+        {product.isOnDeal && (
+          <>
+            <TextField
+              label="Discount"
+              name="discount"
+              type="number"
+              value={product.dealDetails.discount}
+              onChange={handleDealDetailsChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Deal Expiry"
+              name="dealExpiry"
+              type="date"
+              value={product.dealDetails.dealExpiry}
+              onChange={handleDealDetailsChange}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </>
+        )}
         <Box mt={2}>
-          <Typography variant="h6">Quantities</Typography>
-          {product.quantities.map((quantity, index) => (
-            <Box key={index} display="flex" alignItems="center" mb={2}>
-              <TextField
-                label="Unit"
-                value={quantity.unit}
-                onChange={(e) => handleQuantityChange(index, 'unit', e.target.value)}
-                style={{ marginRight: '10px' }}
-              />
-              <TextField
-                label="Price"
-                type="number"
-                value={quantity.price}
-                onChange={(e) => handleQuantityChange(index, 'price', e.target.value)}
-                style={{ marginRight: '10px' }}
-              />
-              <IconButton onClick={() => handleDeleteQuantity(index)}>
-                <HiOutlineTrash />
-              </IconButton>
-            </Box>
-          ))}
-          <Button variant="contained" color="primary" onClick={handleAddQuantity} startIcon={<HiOutlinePlus />}>
-            Add Quantity
-          </Button>
-        </Box>
-        <Box mt={2}>
-          <Typography variant="h6">Details</Typography>
-          {product.details.map((detail, index) => (
-            <Box key={index} display="flex" alignItems="center" mb={2}>
-              <TextField
-                label="Title"
-                value={detail.title}
-                onChange={(e) => handleDetailChange(index, 'title', e.target.value)}
-                style={{ marginRight: '10px' }}
-              />
-              <TextField
-                label="Content"
-                value={detail.content}
-                onChange={(e) => handleDetailChange(index, 'content', e.target.value)}
-                style={{ marginRight: '10px' }}
-              />
-              <IconButton onClick={() => handleDeleteDetail(index)}>
-                <HiOutlineTrash />
-              </IconButton>
-            </Box>
-          ))}
-          <Button variant="contained" color="primary" onClick={handleAddDetail} startIcon={<HiOutlinePlus />}>
-            Add Detail
-          </Button>
-        </Box>
-        <Box mt={2}>
-          <Typography variant="h6">Profile Image</Typography>
-          {product.image ? (
-            <Box position="relative" display="inline-block">
-              <img
-                src={typeof product.image === 'string' ? product.image : URL.createObjectURL(product.image)}
-                alt="product"
-                style={{ width: '100px', marginRight: '10px' }}
-                onClick={() => handleImageClick(typeof product.image === 'string' ? product.image : URL.createObjectURL(product.image))}
-              />
-              <IconButton
-                style={{ position: 'absolute', top: 0, right: 0 }}
-                onClick={handleDeleteImage}
-              >
-                <HiOutlineTrash />
-              </IconButton>
-            </Box>
-          ) : (
-            <Button variant="contained" component="label">
-              Upload Image
-              <input
-                type="file"
-                hidden
-                onChange={handleImageChange}
-              />
-            </Button>
-          )}
-        </Box>
-        <Box mt={2}>
-          <Typography variant="h6">Images</Typography>
           <Button variant="contained" component="label">
             Upload Images
             <input
               type="file"
               hidden
               multiple
-              onChange={handleImagesChange}
+              onChange={handleImageChange}
             />
           </Button>
-          <Box mt={2}>
-            {product.images.map((image, index) => (
-              <Box key={index} position="relative" display="inline-block">
-                <img
-                  src={typeof image === 'string' ? image : URL.createObjectURL(image)}
-                  alt={`product-${index}`}
-                  style={{ width: '100px', marginRight: '10px' }}
-                  onClick={() => handleImageClick(typeof image === 'string' ? image : URL.createObjectURL(image))}
-                />
-                <IconButton
-                  style={{ position: 'absolute', top: 0, right: 0 }}
-                  onClick={() => handleDeleteImages(index)}
-                >
-                  <HiOutlineTrash />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
+          {product.images.length > 0 && (
+            <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
+              {product.images.map((image, index) => (
+                <Box key={index} position="relative" display="inline-block">
+                  <img
+                    src={typeof image === 'string' ? image : URL.createObjectURL(image)}
+                    alt={`product-${index}`}
+                    style={{ width: '100px', marginRight: '10px' }}
+                    onClick={() => handleImageClick(typeof image === 'string' ? image : URL.createObjectURL(image))}
+                  />
+                  <IconButton
+                    style={{ position: 'absolute', top: 0, right: 0 }}
+                    onClick={() => handleDeleteImage(index)}
+                  >
+                    <HiOutlineTrash />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Box>
-        <Button variant="contained" color="primary" type="submit" style={{ marginTop: '20px' }}>
+        <Typography variant="h6" gutterBottom>
+          Additional Details
+        </Typography>
+        {product.additionalDetails.map((detail, index) => (
+          <Box key={index} display="flex" alignItems="center" mb={2}>
+            <TextField
+              label="Title"
+              name="title"
+              value={detail.title}
+              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Size"
+              name="size"
+              value={detail.size}
+              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              fullWidth
+              margin="normal"
+            />
+            <IconButton onClick={() => handleRemoveAdditionalDetail(index)}>
+              <HiOutlineTrash />
+            </IconButton>
+          </Box>
+        ))}
+        <Button variant="contained" color="primary" onClick={handleAddAdditionalDetail}>
+          Add Additional Detail
+        </Button>
+        <Button variant="contained" color="primary" onClick={handleUpdateProduct} startIcon={<HiOutlineSave />} style={{ marginTop: '20px' }}>
           Update Product
         </Button>
-      </form>
+      </Box>
       <Modal open={!!selectedImage} onClose={handleCloseModal}>
         <Box
           position="absolute"
-          top="25%"
-          left="25%"
+          top="50%"
+          left="50%"
           transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
-          width="50%"
+          width="80%"
           maxWidth="600px"
-          maxHeight="50vh"
+          maxHeight="80vh"
           overflow="auto"
         >
           <Box

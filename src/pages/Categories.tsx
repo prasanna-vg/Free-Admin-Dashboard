@@ -143,6 +143,14 @@ const Categories = () => {
     setSelectedImage(null);
   };
 
+  const handleCreateSubCategory = () => {
+    navigate('/subcategories/new');
+  };
+
+  const handleCreateProduct = () => {
+    navigate('/products/new');
+  };
+
   const categoryColumns: TableColumn<Category>[] = [
     { name: 'Name', selector: row => row.name, sortable: true },
     {
@@ -197,7 +205,7 @@ const Categories = () => {
       name: (
         <div className="flex" style={{ alignItems: 'center' }}>
           Actions
-          <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/subcategories/new')}>
+          <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => handleCreateSubCategory()}>
             Add Sub category
           </Button>
         </div>
@@ -233,7 +241,7 @@ const Categories = () => {
       name: (
         <div className="flex" style={{ alignItems: 'center' }}>
           Actions
-          <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/products/new')}>
+          <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => handleCreateProduct()}>
             Add Product
           </Button>
         </div>
@@ -266,37 +274,19 @@ const Categories = () => {
           className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
           placeholder="Search categories, subcategories, or products..."
         />
-        {/* <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/categories/new')}>
-          Add Category
-        </Button> */}
       </Box>
       <DataTable
-        // title={
-        //   <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/categories/new')}>
-        //     Add Category
-        //   </Button>
-        // }
         columns={categoryColumns}
         data={filteredCategories}
         style={{ marginLeft: '20px' }}
         expandableRows
         expandableRowsComponent={({ data }) => (
           <DataTable
-            // title={
-            //   <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/subcategories/new')}>
-            //     Add SubCategory
-            //   </Button>
-            // }
             columns={subCategoryColumns}
             data={data.subCategories}
             expandableRows
             expandableRowsComponent={({ data }) => (
               <DataTable
-                // title={
-                //   <Button variant="contained" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/products/new')}>
-                //     Add Product
-                //   </Button>
-                // }
                 columns={productColumns}
                 data={data.products}
                 style={{ marginLeft: '20px' }}

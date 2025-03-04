@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchSubCategoryById, updateSubCategory, fetchCategories } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { HiOutlineTrash, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 interface SubCategory {
   id: string;
@@ -14,10 +14,12 @@ interface SubCategory {
 const EditSubCategory = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { categoryId } = location.state || {};
   const [subCategory, setSubCategory] = useState<SubCategory>({
     id: '',
     name: '',
-    categoryId: '',
+    categoryId: categoryId || '',
     image: '',
   });
   const [categories, setCategories] = useState<any[]>([]);
@@ -42,8 +44,10 @@ const EditSubCategory = () => {
 
     const getCategories = async () => {
       try {
-        const data = await fetchCategories();
-        setCategories(data);
+        const response = await fetchCategories();
+        if (response.success) {
+          setCategories(response.categories);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -161,7 +165,7 @@ const EditSubCategory = () => {
             </Box>
           )}
         </Box>
-        <Button variant="contained" color="primary" onClick={handleUpdateSubCategory}>
+        <Button variant="contained" color="primary" onClick={handleUpdateSubCategory} startIcon={<HiOutlineSave />}>
           Update SubCategory
         </Button>
       </Box>

@@ -162,10 +162,10 @@ const Orders = () => {
       name: 'Actions',
       cell: row => (
         <div className="flex">
-          <Button variant="contained" size="small" style={{margin:'8px'}} color="primary" onClick={() => handleAcceptOrder(row.id)} disabled={row.orderStatus === 'accepted'}>
+          <Button variant="contained" size="small" style={{margin:'8px'}} color="primary" onClick={() => handleAcceptOrder(row.id)} disabled={row.orderStatus === 'accepted' || row.orderStatus === 'cancelled'}>
             Accept
           </Button>
-          <Button variant="contained" size="small" style={{margin:'8px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected'}>
+          <Button variant="contained" size="small" style={{margin:'8px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected' || row.orderStatus === 'cancelled'}>
             Reject
           </Button>
           <Button variant="contained" size="small" style={{margin:'8px'}} color="default" onClick={() => handleViewOrder(row)}>
@@ -191,12 +191,12 @@ const Orders = () => {
           className="w-60 h-10 border dark:bg-blackPrimary bg-white border-gray-600 dark:text-whiteSecondary text-blackPrimary outline-0 indent-10 focus:border-gray-500"
           placeholder="Search orders..."
         />
-        <Button variant="contained" color="primary" onClick={handleSortChange}>
+        {/* <Button variant="contained" color="primary" onClick={handleSortChange}>
           Sort by Date {sortOrder === 'asc' ? '▲' : '▼'}
         </Button>
         <Button variant="contained" color="primary" startIcon={<AiOutlineExport />}>
           Export Orders
-        </Button>
+        </Button> */}
       </Box>
       <DataTable
         columns={columns}
