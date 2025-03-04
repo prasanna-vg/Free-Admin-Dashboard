@@ -162,13 +162,13 @@ const Orders = () => {
       name: 'Actions',
       cell: row => (
         <div className="flex">
-          <Button variant="contained" size="small" style={{margin:'8px'}} color="primary" onClick={() => handleAcceptOrder(row.id)} disabled={row.orderStatus === 'accepted' || row.orderStatus === 'cancelled'}>
+          <Button variant="contained" size="small" style={{margin:'4px'}} color="primary" onClick={() => handleAcceptOrder(row.id)} disabled={row.orderStatus === 'accepted' || row.orderStatus === 'cancelled'}>
             Accept
           </Button>
-          <Button variant="contained" size="small" style={{margin:'8px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected' || row.orderStatus === 'cancelled'}>
+          <Button variant="contained" size="small" style={{margin:'4px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected' || row.orderStatus === 'cancelled'}>
             Reject
           </Button>
-          <Button variant="contained" size="small" style={{margin:'8px'}} color="default" onClick={() => handleViewOrder(row)}>
+          <Button variant="contained" size="small" style={{margin:'4px'}} color="default" onClick={() => handleViewOrder(row)}>
             View
           </Button>
         </div>
