@@ -122,7 +122,16 @@ const PickAndPack = () => {
       }
     }
   };
-
+  const handleButtonClick = (dataUrl: string | null, orderId: number) => {
+    if (dataUrl) {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'file.pdf';
+      link.click();
+    } else {
+      handleDownloadPDF(orderId);
+    }
+  };
   const handleDownloadPDF = async (id: number) => {
     try {
       const updatedRecord = await markAsPacked(id);
@@ -143,9 +152,15 @@ const PickAndPack = () => {
     {
       name: 'Actions',
       cell: row => (
-        <Button variant="contained" color="primary" size="small" onClick={() => handleDownloadPDF(row.Order.id)} disabled={row.packed}>
-          Mark as packed
-        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => handleButtonClick(row.dataPageUrl, row.Order.id)}
+          // disabled={row.packed}
+        >
+          {row.dataPageUrl ? 'Download PDF' : 'Mark as packed'}
+</Button>
       ),
     },
   ];
