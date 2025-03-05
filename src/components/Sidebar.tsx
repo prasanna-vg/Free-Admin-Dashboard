@@ -128,7 +128,7 @@ const Sidebar = () => {
           </ListItemIcon>
           <ListItemText primary="Pick and Pack" />
         </ListItem>
-        <ListItem
+        {/* <ListItem
           // button
           component={NavLink}
           to="/delivery"
@@ -141,8 +141,8 @@ const Sidebar = () => {
             <HiOutlineTruck />
           </ListItemIcon>
           <ListItemText primary="Delivery" />
-        </ListItem>
-        <ListItem
+        </ListItem> */}
+        {/* <ListItem
           // button
           component={NavLink}
           to="/delivery-partners"
@@ -155,7 +155,7 @@ const Sidebar = () => {
             <HiOutlineCake />
           </ListItemIcon>
           <ListItemText primary="Delivery Partners" />
-        </ListItem>
+        </ListItem> */}
         <ListItem
           component={NavLink}
           to="/inventory"
