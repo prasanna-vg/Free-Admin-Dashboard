@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../utils/apiService';
+import { fetchDeliveries, addDelivery, updateDelivery } from '../utils/apiService';
 import {
   Container,
   Typography,
@@ -14,9 +14,8 @@ import {
   Paper,
   Button,
   Modal,
-  IconButton,
 } from '@mui/material';
-import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus } from 'react-icons/hi';
+import { HiOutlinePlus } from 'react-icons/hi';
 
 interface Delivery {
   _id: string;
@@ -135,20 +134,20 @@ const Deliveries = () => {
     }
   };
 
-  const handleDeleteDelivery = async (id: string) => {
-    try {
-      await deleteDelivery(id);
-      const updatedData = await fetchDeliveries();
-      setDeliveries(updatedData);
-      setFilteredDeliveries(updatedData);
-    } catch (error) {
-      console.error('Error deleting delivery:', error);
-    }
-  };
+  // const handleDeleteDelivery = async (id: string) => {
+  //   try {
+  //     await deleteDelivery(id);
+  //     const updatedData = await fetchDeliveries();
+  //     setDeliveries(updatedData);
+  //     setFilteredDeliveries(updatedData);
+  //   } catch (error) {
+  //     console.error('Error deleting delivery:', error);
+  //   }
+  // };
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <Typography variant="h4" gutterBottom>
           Deliveries
         </Typography>
@@ -162,7 +161,7 @@ const Deliveries = () => {
           Add Delivery
         </Button>
       </Box>
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={4} display="flex" justifyContent="space-between">
         <TextField
           type="text"
           value={searchQuery}
@@ -211,7 +210,6 @@ const Deliveries = () => {
           position="absolute"
           top="25%"
           left="25%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}

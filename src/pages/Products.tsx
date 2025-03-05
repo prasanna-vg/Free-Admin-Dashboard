@@ -119,7 +119,7 @@ const Products = () => {
       <Typography variant="h4" gutterBottom>
         Products
       </Typography>
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box component="div" mb={4} display="flex" justifyContent="space-between">
         <TextField
           type="text"
           value={searchQuery}

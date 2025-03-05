@@ -10,10 +10,11 @@ import {
   Modal,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus } from 'react-icons/hi';
 import DataTable, { TableColumn } from 'react-data-table-component';
 
 interface Product {
+  image: string | undefined;
   id: string;
   name: string;
   description: string;
@@ -160,14 +161,14 @@ const Categories = () => {
           src={row.image}
           alt={`category-${row.id}`}
           style={{ width: '100px', cursor: 'pointer' }}
-          onClick={() => handleImageClick(row.image)}
+          onClick={() => row.image && handleImageClick(row.image)}
         />
       ),
     },
     { name: 'Date Added', selector: row => new Date(row.createdAt).toLocaleDateString(), sortable: true },
     {
       name: (
-        <div className="flex" style={{ alignItems: 'center' }}>
+        <div className="flex" style={{ display: 'flex', alignItems: 'center' } as React.CSSProperties}>
           Actions
           <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => navigate('/categories/new')}>
             Add Category
@@ -196,14 +197,14 @@ const Categories = () => {
           src={row.image}
           alt={`subcategory-${row.id}`}
           style={{ width: '100px', cursor: 'pointer' }}
-          onClick={() => handleImageClick(row.image)}
+          onClick={() => row.image && handleImageClick(row.image)}
         />
       ),
     },
     { name: 'Date Added', selector: row => new Date(row.createdAt).toLocaleDateString(), sortable: true },
     {
       name: (
-        <div className="flex" style={{ alignItems: 'center' }}>
+        <div className="flex" style={{ display: 'flex', alignItems: 'center' } as React.CSSProperties}>
           Actions
           <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => handleCreateSubCategory()}>
             Add Sub category
@@ -232,14 +233,14 @@ const Categories = () => {
           src={row.image}
           alt={`product-${row.id}`}
           style={{ width: '100px', cursor: 'pointer' }}
-          onClick={() => handleImageClick(row.image)}
+          onClick={() => row.image && handleImageClick(row.image)}
         />
       ),
     },
     { name: 'Date Added', selector: row => new Date(row.createdAt).toLocaleDateString(), sortable: true },
     {
       name: (
-        <div className="flex" style={{ alignItems: 'center' }}>
+        <div className="flex" style={{ display: 'flex', alignItems: 'center' } as React.CSSProperties}>
           Actions
           <Button style={{marginLeft:'20px'}} variant="outlined" size="small" color="primary" startIcon={<HiOutlinePlus />} onClick={() => handleCreateProduct()}>
             Add Product
@@ -261,12 +262,12 @@ const Categories = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <Typography variant="h4" gutterBottom>
           All Categories
         </Typography>
       </Box>
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={4} display="flex" justifyContent="space-between">
         <TextField
           type="text"
           value={searchQuery}
@@ -300,7 +301,6 @@ const Categories = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -312,7 +312,6 @@ const Categories = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

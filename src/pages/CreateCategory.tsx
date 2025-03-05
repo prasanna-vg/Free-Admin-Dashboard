@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createCategory } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal } from '@mui/material';
-import { HiOutlineTrash, HiOutlineUpload, HiOutlinePlus, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateCategory = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState({
     name: '',
-    image: '',
+    image: '' as string | File,
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ const CreateCategory = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>
@@ -87,7 +87,7 @@ const CreateCategory = () => {
           </Button>
           {category.image && (
             <Box mt={2} position="relative" display="inline-block">
-              <img src={URL.createObjectURL(category.image)} alt="category" style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(URL.createObjectURL(category.image))} />
+              <img src={typeof category.image === 'string' ? category.image : URL.createObjectURL(category.image)} alt="category" style={{ width: '100px', marginRight: '10px' }} onClick={() => handleImageClick(typeof category.image === 'string' ? category.image : URL.createObjectURL(category.image))} />
               <IconButton
                 style={{ position: 'absolute', top: 0, right: 0 }}
                 onClick={handleDeleteImage}
@@ -106,7 +106,6 @@ const CreateCategory = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -118,7 +117,6 @@ const CreateCategory = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

@@ -1,6 +1,5 @@
 // filepath: /d:/BackEnd/Admin FoodCommerce/dashboard-adminpanel/Free-Admin-Dashboard/src/pages/index.ts
 export { default as Categories } from './Categories';
-export { default as SubCategories } from './SubCategories';
 export { default as CreateCategory } from './CreateCategory';
 export { default as CreateSubCategory } from './CreateSubCategory'
 export { default as CreateOrder } from './CreateOrder';

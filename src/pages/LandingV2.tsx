@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { HiUserGroup, HiArrowSmUp } from 'react-icons/hi';
+import {  HiArrowSmUp } from 'react-icons/hi';
 import { fetchUserAnalytics } from '../utils/apiService';
 import { Container, Typography, Paper, Grid, Box } from '@mui/material';
-import Sidebar from '../components/Sidebar';
 
 const LandingV2 = () => {
   const [analytics, setAnalytics] = useState<any>({

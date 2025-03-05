@@ -1,4 +1,3 @@
-import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -7,7 +6,6 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/PrivateRoute';
 import HomeLayout from './pages/HomeLayout';
 import Categories from './pages/Categories';
-import SubCategories from './pages/SubCategories';
 import CreateCategory from './pages/CreateCategory';
 import CreateSubCategory from './pages/CreateSubCategory';
 import Orders from './pages/Orders';
@@ -37,10 +35,8 @@ const router = createBrowserRouter([
     children: [
       { path: 'categories', element: <Categories /> },
       { path: 'landing-page', element: <LandingV2 /> },
-      { path: 'subcategories', element: <SubCategories /> },
       { path: 'categories/new', element: <CreateCategory /> },
       { path: 'categories/:id/edit', element: <EditCategory /> },
-      { path: 'sub-categories', element: <SubCategories /> },
       { path: 'subcategories/new', element: <CreateSubCategory /> },
       { path: 'subcategories/:id/edit', element: <EditSubCategory /> },
       { path: 'orders', element: <Orders /> },

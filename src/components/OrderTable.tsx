@@ -8,12 +8,10 @@
 // Output: OrderTable component that displays the orders in a table
 // *********************
 
-import { nanoid } from "nanoid";
 import { Link } from "react-router-dom";
 import { HiOutlinePencil } from "react-icons/hi";
 import { HiOutlineTrash } from "react-icons/hi";
 import { HiOutlineEye } from "react-icons/hi";
-import { orderAdminItems } from "../utils/data";
 import { fetchOrders } from "../utils/apiService";
 import { useState, useEffect } from "react";
 import Order from "../models/order";

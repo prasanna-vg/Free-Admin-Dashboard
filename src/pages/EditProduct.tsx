@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchProductById, updateProduct, fetchGroupedSubCategoriesByCategory } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, SelectChangeEvent } from '@mui/material';
 import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const EditProduct = () => {
@@ -9,7 +9,26 @@ const EditProduct = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { categoryId, subCategoryId } = location.state || {};
-  const [product, setProduct] = useState({
+  interface Product {
+    name: string;
+    description: string;
+    categoryId: string;
+    subCategoryId: string;
+    measureType: string;
+    price: number;
+    unitCountperquantity: number;
+    minQty: number;
+    isNewArrival: boolean;
+    isOnDeal: boolean;
+    images: File[];
+    dealDetails: {
+      discount: number;
+      dealExpiry: string;
+    };
+    additionalDetails: { title: string; size: string }[];
+  }
+  
+  const [product, setProduct] = useState<Product>({
     name: '',
     description: '',
     categoryId: categoryId || '',
@@ -67,23 +86,29 @@ const EditProduct = () => {
   useEffect(() => {
     if (product.categoryId && groupedSubCategories[product.categoryId]) {
       const subCategories = groupedSubCategories[product.categoryId].subCategories;
-      if (!subCategories.find(subCategory => subCategory.id === product.subCategoryId)) {
+      if (!subCategories.find((subCategory: { id: any; }) => subCategory.id === product.subCategoryId)) {
         setProduct({ ...product, subCategoryId: '' });
       }
     }
   }, [product.categoryId, groupedSubCategories]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProduct({ ...product, [name]: value });
   };
-
-  const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleMeasureInputChange = (event: SelectChangeEvent<string>) => {
+    const { name, value } = event.target;
+    setProduct(prevState => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+  const handleCategoryChange = (e: SelectChangeEvent<string>) => {
     const { value } = e.target;
     setProduct({ ...product, categoryId: value as string, subCategoryId: '' });
   };
 
-  const handleSubCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleSubCategoryChange = (e: SelectChangeEvent<string>) => {
     const { value } = e.target;
     setProduct({ ...product, subCategoryId: value as string });
   };
@@ -161,7 +186,7 @@ const EditProduct = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>
@@ -196,7 +221,7 @@ const EditProduct = () => {
             <MenuItem value="">
               <em>Select Category</em>
             </MenuItem>
-            {Object.values(groupedSubCategories).map(category => (
+            {Object.values(groupedSubCategories).map((category: any) => (
               <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
@@ -214,8 +239,8 @@ const EditProduct = () => {
             <MenuItem value="">
               <em>Select SubCategory</em>
             </MenuItem>
-            {product.categoryId && groupedSubCategories[product.categoryId]?.subCategories.map(subCategory => (
-              <MenuItem key={subCategory.id} value={subCategory.id}>
+            {product.categoryId && groupedSubCategories[product.categoryId]?.subCategories.map((subCategory: { id: React.Key | null | undefined; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }) => (
+              <MenuItem key={subCategory.id ?? ''} value={subCategory.id?.toString() ?? ''}>
                 {subCategory.name}
               </MenuItem>
             ))}
@@ -226,7 +251,7 @@ const EditProduct = () => {
           <Select
             name="measureType"
             value={product.measureType}
-            onChange={handleInputChange}
+            onChange={handleMeasureInputChange}
           >
             <MenuItem value="">
               <em>Select Measure Type</em>
@@ -342,12 +367,12 @@ const EditProduct = () => {
           Additional Details
         </Typography>
         {product.additionalDetails.map((detail, index) => (
-          <Box key={index} display="flex" alignItems="center" mb={2}>
+          <Box key={index} display="flex" mb={2}>
             <TextField
               label="Title"
               name="title"
               value={detail.title}
-              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              onChange={(e) => handleAdditionalDetailsChange(index, e as React.ChangeEvent<HTMLInputElement>)}
               fullWidth
               margin="normal"
             />
@@ -355,7 +380,7 @@ const EditProduct = () => {
               label="Size"
               name="size"
               value={detail.size}
-              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              onChange={(e) => handleAdditionalDetailsChange(index, e as React.ChangeEvent<HTMLInputElement>)}
               fullWidth
               margin="normal"
             />
@@ -376,7 +401,6 @@ const EditProduct = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -388,7 +412,6 @@ const EditProduct = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

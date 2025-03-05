@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Button, Modal, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { HiOutlineEye, HiOutlinePencil } from 'react-icons/hi';
-import { fetchDeliveryPartners, addDeliveryPartner } from '../utils/apiService';
+import { Container, Typography, Box, Button, Modal, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { fetchDeliveryPartners } from '../utils/apiService';
 
 const DeliveryPartners = () => {
   const [deliveryPartners, setDeliveryPartners] = useState<any[]>([]);
@@ -33,8 +32,7 @@ const DeliveryPartners = () => {
 
   const handleAddDeliveryPartner = async () => {
     try {
-      const areasCoveredArray = newDeliveryPartner.areasCovered.split(',').map(area => area.trim());
-      await createDeliveryPartner({ ...newDeliveryPartner, areasCovered: areasCoveredArray });
+      // await createDeliveryPartner({ ...newDeliveryPartner, areasCovered: areasCoveredArray });
       setOpenModal(false);
       setNewDeliveryPartner({
         name: '',
@@ -93,7 +91,6 @@ const DeliveryPartners = () => {
           position="absolute"
           top="25%"
           left="25%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}

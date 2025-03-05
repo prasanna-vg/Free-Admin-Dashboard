@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchCategoryById, updateCategory } from '../utils/apiService';
 import { Container, Typography, TextField, Button, Box, IconButton, Modal } from '@mui/material';
-import { HiOutlineTrash, HiOutlineUpload, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 interface Category {
   id: string;
@@ -78,7 +78,7 @@ const EditCategory = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>
@@ -125,7 +125,6 @@ const EditCategory = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -137,7 +136,6 @@ const EditCategory = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

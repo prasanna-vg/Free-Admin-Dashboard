@@ -1,11 +1,9 @@
 import { AiOutlineSave } from "react-icons/ai";
-import { HiOutlineSave } from "react-icons/hi";
 import {
   ImageUpload,
   InputWithLabel,
   Sidebar,
   SimpleInput,
-  WhiteButton,
   TextAreaInput,
 } from "../components";
 import { useState } from "react";

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPickAndPack, markAsPacked, fetchDeliveryPartners, addDelivery } from '../utils/apiService';
+import { fetchPickAndPack, updateDeliveryStatus, markAsPacked, fetchDeliveryPartners, addDelivery } from '../utils/apiService';
 import {
   Container,
   Typography,
@@ -9,6 +9,7 @@ import {
   Modal,
   Select,
   MenuItem,
+  SelectChangeEvent
 } from '@mui/material';
 import DataTable, { TableColumn } from 'react-data-table-component';
 
@@ -75,14 +76,14 @@ const PickAndPack = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handlePackedFilterChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+  const handlePackedFilterChange = (e: SelectChangeEvent<string>) => {
     setPackedFilter(e.target.value as string);
   };
 
-  const handleOpenModal = (item: PickAndPackItem) => {
-    setSelectedItem(item);
-    setNewDeliveryStatus(item.deliveryStatus);
-  };
+  // const handleOpenModal = (item: PickAndPackItem) => {
+  //   setSelectedItem(item);
+  //   setNewDeliveryStatus(item.deliveryStatus);
+  // };
 
   const handleCloseModal = () => {
     setSelectedItem(null);
@@ -97,7 +98,7 @@ const PickAndPack = () => {
     if (selectedItem) {
       try {
         if (newDeliveryStatus === 'Packed') {
-          const deliveryPartner = await fetchDeliveryPartners(selectedItem.Order.id);
+          const deliveryPartner = await fetchDeliveryPartners();
           if (!deliveryPartner || !deliveryPartner[0]._id) {
             setShowNoDeliveryPartnerModal(true);
             return;
@@ -122,7 +123,7 @@ const PickAndPack = () => {
     }
   };
 
-  const handleDownloadPDF = async (id: string) => {
+  const handleDownloadPDF = async (id: number) => {
     try {
       const updatedRecord = await markAsPacked(id);
       if (updatedRecord.pickAndPack.dataPageUrl) {
@@ -151,12 +152,12 @@ const PickAndPack = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <Typography variant="h4" gutterBottom>
           Pick and Pack
         </Typography>
       </Box>
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={4} display="flex" justifyContent="space-between">
         <TextField
           type="text"
           value={searchQuery}
@@ -188,7 +189,6 @@ const PickAndPack = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -204,7 +204,6 @@ const PickAndPack = () => {
             value={newDeliveryStatus}
             onChange={(e) => setNewDeliveryStatus(e.target.value as string)}
             fullWidth
-            margin="normal"
           >
             <MenuItem value="Assigned">Assigned</MenuItem>
             <MenuItem value="Packed">Packed</MenuItem>
@@ -228,7 +227,6 @@ const PickAndPack = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}

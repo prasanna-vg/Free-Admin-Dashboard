@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchProducts, createInventory } from '../utils/apiService';
 import {
   Container,
@@ -13,9 +13,16 @@ import { HiOutlinePlus, HiOutlineMinus } from 'react-icons/hi';
 import DataTable from 'react-data-table-component';
 
 const Inventory = () => {
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  interface Product {
+    id: number;
+    name: string;
+    quantity: number;
+    totalQuantity: number;
+  }
+  
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(0);
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +43,7 @@ const Inventory = () => {
     getAllProducts();
   }, []);
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
     setFilteredProducts(
@@ -48,7 +55,7 @@ const Inventory = () => {
     );
   };
 
-  const handleOpen = (product) => {
+  const handleOpen = (product: Product) => {
     setSelectedProduct(product);
     setQuantity(product.quantity);
     setOpen(true);
@@ -60,18 +67,22 @@ const Inventory = () => {
     setQuantity(0);
   };
 
-  const handleQuantityChange = (e) => {
-    setQuantity(e.target.value);
-  };
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setQuantity(Number(e.target.value));
+    };
 
   const handleUpdateQuantity = async () => {
     try {
-      await createInventory(selectedProduct.id, quantity);
-      setProducts((prevItems) =>
-        prevItems.map((item) =>
-          item.id === selectedProduct.id ? { ...item, quantity } : item
-        )
-      );
+      if (selectedProduct) {
+        await createInventory(selectedProduct.id, quantity);
+      }
+      if (selectedProduct) {
+        setProducts((prevItems) =>
+          prevItems.map((item) =>
+            item.id === selectedProduct.id ? { ...item, quantity } : item
+          )
+        );
+      }
       handleClose();
     } catch (error) {
       console.error('Error updating inventory item:', error);
@@ -81,22 +92,22 @@ const Inventory = () => {
   const columns = [
     {
       name: 'Product ID',
-      selector: (row) => row.id,
+      selector: (row: { id: any; }) => row.id,
       sortable: true,
     },
     {
       name: 'Product Name',
-      selector: (row) => row.name,
+      selector: (row: { name: any; })  => row.name,
       sortable: true,
     },
     {
       name: 'Total Quantity',
-      selector: (row) => row.totalQuantity,
+      selector: (row: { totalQuantity: any; })  => row.totalQuantity,
       sortable: true,
     },
     {
       name: 'Actions',
-      cell: (row) => (
+      cell: (row: Product)  => (
         <Button variant="outlined" onClick={() => handleOpen(row)}>
           Update Quantity
         </Button>
@@ -106,7 +117,7 @@ const Inventory = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <Typography variant="h4" gutterBottom>
           Inventory
         </Typography>
@@ -124,7 +135,6 @@ const Inventory = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -133,7 +143,7 @@ const Inventory = () => {
           <Typography variant="h6" gutterBottom>
             Update Quantity for {selectedProduct?.name}
           </Typography>
-          <Box display="flex" alignItems="center" mb={2}>
+          <Box display="flex" mb={2}>
             <IconButton onClick={() => setQuantity(quantity - 1)}>
               <HiOutlineMinus />
             </IconButton>

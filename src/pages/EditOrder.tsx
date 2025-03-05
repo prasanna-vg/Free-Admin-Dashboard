@@ -46,7 +46,7 @@ const EditOrder = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>

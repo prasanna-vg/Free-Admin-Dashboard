@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createProduct, fetchGroupedSubCategoriesByCategory } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, IconButton, Modal } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, IconButton, Modal, SelectChangeEvent } from '@mui/material';
 import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateProduct = () => {
@@ -19,7 +19,7 @@ const CreateProduct = () => {
     minQty: 0,
     isNewArrival: false,
     isOnDeal: false,
-    images: [],
+    images: [] as File[],
     dealDetails: {
       discount: 0,
       dealExpiry: '',
@@ -53,12 +53,12 @@ const CreateProduct = () => {
     setProduct({ ...product, [name]: value });
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleCategoryChange = (e: SelectChangeEvent<any>) => {
     const { value } = e.target;
     setProduct({ ...product, categoryId: value as string, subCategoryId: '' });
   };
 
-  const handleSubCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleSubCategoryChange = (e: SelectChangeEvent<any>) => {
     const { value } = e.target;
     setProduct({ ...product, subCategoryId: value as string });
   };
@@ -136,7 +136,7 @@ const CreateProduct = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>
@@ -149,7 +149,7 @@ const CreateProduct = () => {
           label="Name"
           name="name"
           value={product.name}
-          onChange={handleInputChange}
+          onChange={(e) => handleInputChange(e as React.ChangeEvent<HTMLInputElement>)}
           fullWidth
           margin="normal"
         />
@@ -172,8 +172,8 @@ const CreateProduct = () => {
               <em>Select Category</em>
             </MenuItem>
             {Object.values(groupedSubCategories).map(category => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
+              <MenuItem key={(category as any).id} value={(category as any).id}>
+                {(category as any).name}
               </MenuItem>
             ))}
           </Select>
@@ -189,7 +189,7 @@ const CreateProduct = () => {
             <MenuItem value="">
               <em>Select SubCategory</em>
             </MenuItem>
-            {product.categoryId && groupedSubCategories[product.categoryId]?.subCategories.map(subCategory => (
+            {product.categoryId && groupedSubCategories[product.categoryId]?.subCategories.map((subCategory: { id: string; name: string }) => (
               <MenuItem key={subCategory.id} value={subCategory.id}>
                 {subCategory.name}
               </MenuItem>
@@ -201,8 +201,8 @@ const CreateProduct = () => {
           <Select
             name="measureType"
             value={product.measureType}
-            onChange={handleInputChange}
-          >
+            onChange={(e) => handleInputChange(e as React.ChangeEvent<HTMLInputElement>)}
+            >
             <MenuItem value="">
               <em>Select Measure Type</em>
             </MenuItem>
@@ -317,12 +317,12 @@ const CreateProduct = () => {
           Additional Details
         </Typography>
         {product.additionalDetails.map((detail, index) => (
-          <Box key={index} display="flex" alignItems="center" mb={2}>
+          <Box key={index} display="flex" mb={2}>
             <TextField
               label="Title"
               name="title"
               value={detail.title}
-              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              onChange={(e) => handleAdditionalDetailsChange(index, e as React.ChangeEvent<HTMLInputElement>)}
               fullWidth
               margin="normal"
             />
@@ -330,7 +330,7 @@ const CreateProduct = () => {
               label="Size"
               name="size"
               value={detail.size}
-              onChange={(e) => handleAdditionalDetailsChange(index, e)}
+              onChange={(e) => handleAdditionalDetailsChange(index, e as React.ChangeEvent<HTMLInputElement>)}
               fullWidth
               margin="normal"
             />
@@ -351,7 +351,6 @@ const CreateProduct = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -363,7 +362,6 @@ const CreateProduct = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

@@ -47,7 +47,7 @@ export const fetchProductById = async (id: string) => {
     throw error;
   }
 };
-export const fetchProductByGroup = async (id: string) => {
+export const fetchProductByGroup = async () => {
   try {
     const response = await axios.get(
       `${API_BASE_URL}/products/grouped/by-category-and-subcategory`
@@ -311,7 +311,7 @@ export const fetchPickAndPack = async () => {
     throw error;
   }
 };
-export const markAsPacked = async (id: string) => {
+export const markAsPacked = async (id: number) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/pickandpack/pack/${id}`);
     return response.data;

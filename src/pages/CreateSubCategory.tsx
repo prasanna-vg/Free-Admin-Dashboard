@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createSubCategory, fetchCategories } from '../utils/apiService';
-import { Container, Typography, TextField, Button, Box, IconButton, Modal,  FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, IconButton, Modal,  FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { HiOutlineTrash, HiOutlineSave, HiOutlineArrowLeft } from 'react-icons/hi';
 
 const CreateSubCategory = () => {
@@ -11,7 +11,7 @@ const CreateSubCategory = () => {
   const [subCategory, setSubCategory] = useState({
     name: '',
     category: categoryId || '',
-    image: null,
+    image: null as File | null,
   });
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -36,7 +36,7 @@ const CreateSubCategory = () => {
     setSubCategory({ ...subCategory, [name]: value });
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleCategoryChange = (e: SelectChangeEvent<any>) => {
     const { value } = e.target;
     setSubCategory({ ...subCategory, category: value as string });
   };
@@ -78,7 +78,7 @@ const CreateSubCategory = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <HiOutlineArrowLeft />
         </IconButton>
@@ -127,7 +127,7 @@ const CreateSubCategory = () => {
                 src={URL.createObjectURL(subCategory.image)}
                 alt="subcategory"
                 style={{ width: '100px', marginRight: '10px' }}
-                onClick={() => handleImageClick(URL.createObjectURL(subCategory.image))}
+                onClick={() => subCategory.image && handleImageClick(URL.createObjectURL(subCategory.image))}
               />
               <IconButton
                 style={{ position: 'absolute', top: 0, right: 0 }}
@@ -147,7 +147,6 @@ const CreateSubCategory = () => {
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -159,7 +158,6 @@ const CreateSubCategory = () => {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
             height="60vh"
             overflow="hidden"
           >

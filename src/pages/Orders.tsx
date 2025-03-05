@@ -6,13 +6,12 @@ import {
   Box,
   TextField,
   Button,
+  SelectChangeEvent,
   Modal,
   Select,
   MenuItem,
 } from '@mui/material';
-import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus } from 'react-icons/hi';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { AiOutlineExport } from 'react-icons/ai';
 
 interface OrderItem {
   id: string;
@@ -50,13 +49,13 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [returnStatus, setReturnStatus] = useState('');
   const [returnReason, setReturnReason] = useState('');
   const [editOrder, setEditOrder] = useState<Order | null>(null);
 
   useEffect(() => {
+    console.log(returnStatus);
     const getOrders = async () => {
       try {
         const data = await fetchOrders();
@@ -81,15 +80,15 @@ const Orders = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleSortChange = () => {
-    const sorted = [...filteredOrders].sort((a, b) => {
-      const dateA = new Date(a.deliveryDate).getTime();
-      const dateB = new Date(b.deliveryDate).getTime();
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-    setFilteredOrders(sorted);
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
+  // const handleSortChange = () => {
+  //   const sorted = [...filteredOrders].sort((a, b) => {
+  //     const dateA = new Date(a.deliveryDate).getTime();
+  //     const dateB = new Date(b.deliveryDate).getTime();
+  //     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  //   });
+  //   setFilteredOrders(sorted);
+  //   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  // };
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
@@ -125,7 +124,7 @@ const Orders = () => {
     }
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+  const handleStatusChange = (e: SelectChangeEvent<string>) => {
     if (editOrder) {
       setEditOrder({ ...editOrder, orderStatus: e.target.value as string });
     }
@@ -155,7 +154,7 @@ const Orders = () => {
 
   const columns: TableColumn<Order>[] = [
     { name: 'Order ID', selector: row => row.id.toString(), sortable: true },
-    { name: 'Order Status', selector: row => row.orderStatus, sortable: true },
+    { name: 'Order Status', selector: (row: { orderStatus: string | number | boolean; }) => row.orderStatus, sortable: true },
     { name: 'Total Amount', selector: row => `₹${row.totalAmount}`, sortable: true },
     { name: 'Delivery Date', selector: row => new Date(row.deliveryDate).toLocaleDateString(), sortable: true },
     {
@@ -168,7 +167,7 @@ const Orders = () => {
           <Button variant="contained" size="small" style={{margin:'4px'}} color="secondary" onClick={() => handleRejectOrder(row.id)} disabled={row.orderStatus === 'rejected' || row.orderStatus === 'cancelled'}>
             Reject
           </Button>
-          <Button variant="contained" size="small" style={{margin:'4px'}} color="default" onClick={() => handleViewOrder(row)}>
+          <Button variant="contained" size="small" style={{margin:'4px'}} onClick={() => handleViewOrder(row)}>
             View
           </Button>
         </div>
@@ -178,12 +177,12 @@ const Orders = () => {
 
   return (
     <Container>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" mb={2}>
         <Typography variant="h4" gutterBottom>
           All Orders
         </Typography>
       </Box>
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={4} display="flex" justifyContent="space-between">
         <TextField
           type="text"
           value={searchQuery}
@@ -211,7 +210,6 @@ const Orders = () => {
           position="absolute"
           top="25%"
           left="25%"
-          transform="translate(-50%, -50%)"
           bgcolor="background.paper"
           boxShadow={24}
           p={4}
@@ -288,7 +286,6 @@ const Orders = () => {
                 value={editOrder.orderStatus}
                 onChange={handleStatusChange}
                 fullWidth
-                margin="normal"
               >
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="accepted">Accepted</MenuItem>

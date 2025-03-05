@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchCategories } from '../utils/apiService';
 import { HiOutlinePencil, HiOutlineEye, HiOutlineTrash } from 'react-icons/hi';

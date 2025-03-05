@@ -1,6 +1,5 @@
-import React from 'react';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Box, Typography } from '@mui/material';
-import { HiLogin, HiOutlineHome, HiOutlineDeviceMobile, HiOutlineTag, HiOutlineTruck, HiOutlineClipboardList, HiOutlineCake } from 'react-icons/hi';
+import { HiLogin, HiOutlineHome, HiOutlineTag, HiOutlineTruck, HiOutlineClipboardList, HiOutlineCake } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 import { NavLink, useNavigate } from 'react-router-dom';
 
@@ -13,8 +12,8 @@ const Sidebar = () => {
     navigate('/login');
   };
 
-  const navActiveClass = 'nav-active';
-  const navInactiveClass = 'nav-inactive';
+  // const navActiveClass = 'nav-active';
+  // const navInactiveClass = 'nav-inactive';
 
   const listItemStyles = {
     '&.nav-active': {
@@ -42,19 +41,17 @@ const Sidebar = () => {
         },
       }}
     >
-      <Box display="flex" alignItems="center" justifyContent="space-between" p={2}>
+      <Box display="flex" justifyContent="space-between" p={2}>
         <Typography variant="h6" noWrap>
           Admin App
         </Typography>
       </Box>
       <List>
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/landing-page"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={({ isActive }: { isActive: boolean }) => (isActive ? navActiveClass : navInactiveClass)}
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -63,12 +60,11 @@ const Sidebar = () => {
           <ListItemText primary="Home" />
         </ListItem>
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/categories"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={({ isActive }: { isActive: boolean }) => (isActive ? navActiveClass : navInactiveClass)}
+
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -105,12 +101,12 @@ const Sidebar = () => {
           <ListItemText primary="Products" />
         </ListItem> */}
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/orders"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={(isActiveObj: { isActive: boolean }) =>
+          //   isActiveObj.isActive ? navActiveClass : navInactiveClass
+          // }
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -119,12 +115,12 @@ const Sidebar = () => {
           <ListItemText primary="Orders" />
         </ListItem>
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/pick-and-pack"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={(isActiveObj: { isActive: boolean }) =>
+          //   isActiveObj.isActive ? navActiveClass : navInactiveClass
+          // }
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -133,12 +129,12 @@ const Sidebar = () => {
           <ListItemText primary="Pick and Pack" />
         </ListItem>
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/delivery"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={(isActiveObj: { isActive: boolean }) =>
+          //   isActiveObj.isActive ? navActiveClass : navInactiveClass
+          // }
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -147,12 +143,12 @@ const Sidebar = () => {
           <ListItemText primary="Delivery" />
         </ListItem>
         <ListItem
-          button
+          // button
           component={NavLink}
           to="/delivery-partners"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
+          // className={(isActiveObj: { isActive: boolean }) =>
+          //   isActiveObj.isActive ? navActiveClass : navInactiveClass
+          // }
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -161,12 +157,8 @@ const Sidebar = () => {
           <ListItemText primary="Delivery Partners" />
         </ListItem>
         <ListItem
-          button
           component={NavLink}
           to="/inventory"
-          className={(isActiveObj: { isActive: boolean }) =>
-            isActiveObj.isActive ? navActiveClass : navInactiveClass
-          }
           sx={listItemStyles}
         >
           <ListItemIcon sx={{ color: 'inherit' }}>
@@ -175,7 +167,6 @@ const Sidebar = () => {
           <ListItemText primary="Inventory" />
         </ListItem>
         <ListItem
-          button
           onClick={handleLogout}
           sx={{
             color: '#fff',
